@@ -1,0 +1,23 @@
+{
+  "skill_name": "lm-draft-message",
+  "evals": [
+    {
+      "id": "quick-sync",
+      "prompt": "Écris un message Slack court pour Bastien Landre pour lui demander de reviewer mes 2 PRs work-stoppage : #91726 (Read new model work stoppage, OHSET-546) et #91731 (Write new model work stoppage, OHSET-550). Bastien est acting deputy de la crew Setup cette semaine pendant que Mickaël est OOO partial-back. Canal : DM ou #occhealth_setup_crew.",
+      "expected_output": "Quick sync style : 1-3 lignes, 1 ping à Bastien, 2 liens PR inline, ton léger, emoji signature. Checklist d'audit visible même sur message court.",
+      "files": []
+    },
+    {
+      "id": "project-update",
+      "prompt": "Rédige ma réponse sur la GitHub Discussion #33152 mid-quarter checkin de Mickaël. Points à transmettre : O2KR7 backend prêt en review (#91726 + #91731), OHSET-552 FE prep merged, OHSET-555 nouveau ticket Cheerz HQ vs Factory créé cette semaine, AMT framing kickoff avec Bea Lopez Neira, je suis OOO lundi 25 + mardi 26 mai. Marion check aujourd'hui donc je dois publier au plus vite.",
+      "expected_output": "Long-form structuré, TLDR en haut, sections avec titres, liens partout (Linear + Discussion), ping explicite par question si besoin. Format adapté à GitHub Discussion (pas Slack).",
+      "files": []
+    },
+    {
+      "id": "decision-thread",
+      "prompt": "Écris un message Slack dans #occhealth_setup_crew pour proposer le routing d'OHSET-536 (ne pas proposer de suivi pour employés en congé). Deux options : (a) ship standalone en utilisant la leave-detection DSN actuelle, (b) folder dans O2KR7 V0 pour bénéficier du nouveau merge admin-input + DSN. Je penche pour (b) parce qu'on évite de dupliquer la leave-detection logic et l'admin-input couvre les long leaves que la DSN rate. Bastien runs setup cette semaine, Mickaël partial-back. J'ai besoin d'un input avant la Setup backlog review de demain.",
+      "expected_output": "Decision thread : options numérotées avec arguments, recommandation explicite (b), ping spécifique à Bastien + question pour Mickaël, deadline mentionnée (Setup backlog review). Pas un ping en bloc 'cc @bastien @mickael what do you think'.",
+      "files": []
+    }
+  ]
+}

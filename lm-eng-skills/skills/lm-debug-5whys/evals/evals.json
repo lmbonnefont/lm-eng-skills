@@ -1,0 +1,23 @@
+{
+  "skill_name": "debug-5whys",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Hey, j'ai un bug bizarre. Notre endpoint POST /affiliations renvoie une 500 intermittente en prod, mais en local ça passe toujours. Le Sentry montre une KeyError: 'establishment_id' dans le serializer. Ça a commencé hier soir après le deploy.",
+      "expected_output": "Le skill démarre l'investigation avec les 5 Whys, commence par clarifier le contexte (qu'est-ce qui a changé dans le deploy d'hier soir ?), guide vers la root cause (champ manquant dans le payload ? migration pas appliquée ? sérializer pas rétrocompatible ?), puis propose 3 solutions avec des niveaux de risque différents : un hotfix défensif (ajouter un .get() avec fallback), un fix propre (corriger le serializer), et une solution structurelle (validation d'entrée en amont).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Mon test Jest timeout systématiquement depuis ce matin. Il passait avant. C'est le test `should send welcome email on first login` dans auth.test.ts. J'ai touché à rien dans ce fichier.",
+      "expected_output": "Le skill applique les 5 Whys pour un test flaky — demande ce qui a changé récemment (dépendances ? autres fichiers ?), explore si le timeout vient d'un mock mal configuré, d'un service externe non mocké, ou d'une race condition. Propose des solutions de risque croissant : augmenter le timeout (hotfix), corriger le mock, refactorer pour isoler la dépendance email.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "On a un memory leak en prod sur notre service Python. Le pod redémarre toutes les ~6h. J'ai activé tracemalloc et le gros consommateur c'est un dict dans le module `cache.py` qui grandit sans jamais décroître.",
+      "expected_output": "Le skill guide les 5 Whys autour du cache : pourquoi le dict grandit sans bound ? pas de TTL ? pas d'éviction ? qui insère des entrées ? la clé est-elle trop granulaire ? Arrive à une root cause claire (ex: cache non borné sur des clés trop spécifiques). Propose un fix rapide (ajouter un maxsize), un fix propre (LRU cache avec TTL), et une solution structurelle (remplacer par Redis).",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+{
+  "skill_name": "guided-feature-development",
+  "evals": [
+    {
+      "id": 1,
+      "name": "frontend-only-no-split",
+      "prompt": "/guided-feature-development https://linear.app/alan-eu/issue/EP-1234/add-empty-state-to-claims-list",
+      "expected_output": "Skill fetches EP-1234 from Linear MCP, identifies it as a frontend-only list/empty-state feature. Asks clarifying questions from the list/empty-state categories in product-questions.md. Produces tech translation with codebase exploration. Skips split (estimated <500L, frontend-only). Runs implementation loop with jest + storybook test strategy. Applies Gate Rule at every transition.",
+      "files": [],
+      "expectations": [
+        "Calls Linear MCP get_issue to fetch EP-1234 ticket details",
+        "Identifies feature type as list/empty-state and asks questions from those categories in references/product-questions.md",
+        "Questions are multiple-choice (not open-ended), max 3 per batch",
+        "Produces a synthesis summary with edge cases and acceptance criteria before proceeding to Part 2",
+        "Explores codebase for existing list/empty-state components and patterns",
+        "Proposes reusable components vs. new ones to build",
+        "Part 3 (Tracking) is offered since this is user-facing",
+        "Part 4 estimates <500L and frontend-only, so no split is needed — jumps to Part 6",
+        "Part 5 is skipped entirely (no split required)",
+        "Part 6a consults references/testing-strategy.md for frontend test strategy (jest + storybook)",
+        "Part 6b can invoke jest-unit-test and storybook-stories helper skills",
+        "Part 6c invokes /review on changes",
+        "Part 6d invokes create-pr",
+        "Gate Rule applied: asks explicit GO/NO-GO at every Part transition and sub-step"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "fullstack-with-split",
+      "prompt": "/guided-feature-development https://linear.app/alan-eu/issue/EP-5678/add-eligibility-badge-to-member-profile",
+      "expected_output": "Skill fetches EP-5678, identifies it as a full-stack feature (frontend badge + backend eligibility API). Part 4 detects >500L or multi-layer, triggering Part 5 split. Creates sub-tickets in Linear via MCP. Implements in order: migration → backend → frontend, looping Part 6 for each.",
+      "files": [],
+      "expectations": [
+        "Calls Linear MCP get_issue to fetch EP-5678",
+        "Part 1 asks clarifying questions about the badge display, eligibility states, permissions",
+        "Part 2 identifies both frontend (new EligibilityBadge component) and backend (API endpoint or extension) work",
+        "Part 2 lists database changes if eligibility_status column needed",
+        "Part 4 estimates scope touching both frontend AND backend, triggering split",
+        "Part 5 proposes breakdown: Migration ticket (if DB change), Backend ticket, Frontend ticket",
+        "Part 5 creates sub-tickets via Linear MCP save_issue with parent link to EP-5678",
+        "Part 5 displays created ticket URLs",
+        "Implementation order is Migration (if any) → Backend → Frontend",
+        "Part 6 loops: runs 6a-6e for each sub-ticket before moving to next",
+        "Backend sub-ticket uses pytest test strategy from references/testing-strategy.md",
+        "Frontend sub-ticket uses jest + storybook test strategy",
+        "Gate Rule applied at every Part transition and every 6a→6b→6c→6d→6e sub-step"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "figma-url-in-ticket",
+      "prompt": "/guided-feature-development https://linear.app/alan-eu/issue/EP-9012/redesign-onboarding-wizard",
+      "expected_output": "Skill fetches EP-9012, detects figma.com URL(s) in ticket body/attachments. Invokes /figma-to-murray-code for each Figma link. Identifies wizard-type feature and asks wizard-specific product questions. Part 3 tracking is offered for this user-facing wizard flow.",
+      "files": [],
+      "expectations": [
+        "Calls Linear MCP get_issue to fetch EP-9012",
+        "Scans ticket body and attachments for figma.com URLs",
+        "Invokes /figma-to-murray-code skill for each Figma URL found",
+        "Attaches resulting component specs to context for use in Parts 2 and 6b",
+        "Identifies feature type as wizard/multi-step flow",
+        "Asks wizard-specific questions from references/product-questions.md (back navigation, save state, optional steps, success behavior)",
+        "Part 2 references Figma component specs when proposing architecture",
+        "Part 3 tracking is activated (user-facing feature) — recommends metrics like wizard completion rate, step drop-off",
+        "Part 6b implementation references Figma specs for component structure",
+        "Gate Rule applied at every transition"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "backend-only-no-tracking",
+      "prompt": "/guided-feature-development https://linear.app/alan-eu/issue/EP-3456/add-bulk-export-endpoint",
+      "expected_output": "Skill fetches EP-3456, identifies pure backend feature (API endpoint). Part 3 tracking is skipped (not user-facing). No split needed. Part 6 uses pytest-only test strategy. Part 6c invokes /review.",
+      "files": [],
+      "expectations": [
+        "Calls Linear MCP get_issue to fetch EP-3456",
+        "Identifies feature as backend-only (API endpoint, no frontend)",
+        "Part 1 asks backend-relevant questions (request format, auth, pagination, rate limiting, response structure)",
+        "Part 2 explores backend codebase for existing endpoint patterns and services",
+        "Part 3 is skipped or marked as not applicable — feature is not user-facing (pure backend)",
+        "Part 4 estimates scope as backend-only, no split needed — jumps to Part 6",
+        "Part 6a test strategy uses pytest (integration + unit) from references/testing-strategy.md, NOT jest/storybook",
+        "Part 6b implements endpoint + tests without invoking frontend helper skills",
+        "Part 6c invokes /review on changes",
+        "Gate Rule applied: explicitly asks before skipping Part 3"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "gate-rule-skip-and-stop",
+      "prompt": "/guided-feature-development https://linear.app/alan-eu/issue/EP-7890/add-notification-preferences — user says 'skip' to tracking, 'stop' after technical plan",
+      "expected_output": "Skill respects Gate Rule at every transition. When user says 'skip' for Part 3 (tracking), it skips and asks about Part 4. When user says 'stop' after Part 2, it pauses without auto-proceeding. Never takes initiative to skip or reorder steps.",
+      "files": [],
+      "expectations": [
+        "After Part 1 completion, asks: '[Part 1] done. Proceed to Technical Plan (Part 2)?'",
+        "Waits for explicit user confirmation before starting Part 2",
+        "After Part 2 completion, asks: '[Part 2] done. Proceed to Tracking (Part 3)?'",
+        "When user says 'skip', skill skips Part 3 and asks about Part 4 instead",
+        "Does NOT auto-proceed to Part 4 without asking after skip",
+        "When user says 'stop', skill pauses completely — does NOT continue to next Part",
+        "Never auto-proceeds between any Parts without explicit user confirmation",
+        "Never takes initiative to skip or reorder steps on its own",
+        "Gate Rule question format matches: '[Step/Part X] done. Proceed to [next step name]?'",
+        "Offers 'yes', 'skip', and 'stop' as options at each gate"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "session2-no-re-exploration",
+      "prompt": "/guided-feature-development --from-plan .claude/plans/feature-plan-EP-4321.md",
+      "expected_output": "Skill reads the plan file and starts Part 6 directly. Does NOT spawn Explore agents or re-fetch Linear/Figma. Uses plan's Key Files and Grep Search Queries for codebase lookups. If plan is ambiguous, asks user instead of re-exploring.",
+      "files": [],
+      "expectations": [
+        "Reads the plan file at the provided path",
+        "Jumps directly to Part 6 without running Parts 1-5",
+        "Does NOT call Linear MCP get_issue — ticket context is already in the plan",
+        "Does NOT invoke /figma-to-murray-code or Figma MCP — specs are already in the plan",
+        "Does NOT spawn an Explore subagent — uses Grep directly with plan's pre-built queries",
+        "Uses Read tool to understand file structure, not Explore",
+        "If a concept is not covered in the plan's Key Files, asks the user instead of re-exploring",
+        "Uses Figma specs from the plan's 'Figma Specs' section as-is for Part 6b implementation",
+        "Gate Rule applied at every 6a→6b→6c→6d→6e sub-step"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "questions-use-tool-not-text",
+      "prompt": "/guided-feature-development https://linear.app/alan-eu/issue/EP-6543/add-document-upload-flow — verify all questions use AskUserQuestion tool",
+      "expected_output": "Every question to the user uses AskUserQuestion tool with predefined options. No questions are output as plain text with bullet-point choices. Gate Rule questions also use the tool.",
+      "files": [],
+      "expectations": [
+        "Part 1 clarifying questions use AskUserQuestion tool with options array",
+        "Each question has concrete options (2-4 per question), not open-ended text",
+        "Gate Rule transitions use AskUserQuestion with 'Yes, proceed' / 'Skip' / 'Stop here' options",
+        "No questions appear as plain text with bullet-point choices that require typing",
+        "Part 2 config/catalog audit question uses AskUserQuestion",
+        "Part 3 tracking confirmation uses AskUserQuestion",
+        "Part 6c review findings question uses AskUserQuestion",
+        "Checkpoint is written immediately after each Part confirmation, not deferred"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "architecture-alternatives-review",
+      "prompt": "/guided-feature-development https://linear.app/alan-eu/issue/EP-2222/add-prescription-renewal-flow — user confirms Part 2 architecture, then accepts alternatives review. The proposed architecture is: new PrescriptionRenewalWizard component + new /api/prescriptions/renew endpoint + new DB column renewal_status on prescriptions table.",
+      "expected_output": "After Part 2 Step 3 architecture confirmation, skill asks if user wants to explore alternatives. On 'yes', spawns a single subagent that returns 3 alternatives (Cleaner, Faster, Bolder) as structured JSON. Presents them via AskUserQuestion. If user picks one, reworks architecture accordingly.",
+      "files": [],
+      "expectations": [
+        "After Part 2 Step 3 confirmation, uses AskUserQuestion to ask 'Want to explore alternative approaches before committing?' with options 'Yes, review alternatives' and 'Skip, I'm happy with this approach'",
+        "Spawns exactly 1 subagent (not 3) for the alternatives review",
+        "Subagent receives the confirmed architecture, product requirements from Part 1, and codebase exploration results from Part 2 Step 2",
+        "Subagent returns structured JSON with 3 alternatives: Cleaner, Faster, Bolder",
+        "Each alternative includes: summary, approach diff vs original, tradeoffs, estimated LOC delta",
+        "Alternatives are genuinely different from each other — not 3 variations of the same idea",
+        "Presents alternatives via AskUserQuestion with options: 'Stick with original', 'Dig into Cleaner', 'Dig into Faster', 'Dig into Bolder'",
+        "If user picks an alternative, reworks the architecture proposal and re-confirms before proceeding",
+        "Checkpoint Part 2 section includes which alternatives were considered and rationale for final choice",
+        "Does NOT spawn Explore agents during the alternatives review — reuses existing codebase data"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "architecture-alternatives-skip",
+      "prompt": "/guided-feature-development https://linear.app/alan-eu/issue/EP-3333/add-member-search-filters — user confirms Part 2 architecture, then skips alternatives review",
+      "expected_output": "After Part 2 Step 3 confirmation, skill asks if user wants to explore alternatives. User says 'Skip'. Skill proceeds directly to checkpoint write and Part 3 without spawning any alternatives subagent.",
+      "files": [],
+      "expectations": [
+        "After Part 2 Step 3 confirmation, uses AskUserQuestion to offer alternatives review",
+        "When user selects 'Skip, I'm happy with this approach', does NOT spawn any subagent",
+        "Proceeds directly to writing the Part 2 checkpoint",
+        "Moves to Part 3 gate without delay",
+        "No wasted tokens on alternatives exploration when user doesn't want it"
+      ]
+    }
+  ]
+}

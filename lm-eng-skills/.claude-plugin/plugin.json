@@ -1,0 +1,14 @@
+{
+  "name": "lm-eng-skills",
+  "description": "21 engineering skills + the Zero Trust Didactic output style for alan-apps development",
+  "version": "1.0.0",
+  "author": {
+    "name": "Louis-Marie Bonnefont",
+    "email": "louis-marie.bonnefont@alan.eu"
+  },
+  "homepage": "https://github.com/lmbonnefont/lm-eng-skills",
+  "repository": "https://github.com/lmbonnefont/lm-eng-skills",
+  "keywords": ["engineering", "code-review", "feature-development", "debugging", "alan-apps"],
+  "skills": "./skills/",
+  "outputStyles": "./output-styles/"
+}

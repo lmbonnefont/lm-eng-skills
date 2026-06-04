@@ -1,0 +1,23 @@
+{
+  "skill_name": "lm-reuse-discovery",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Je veux ajouter un endpoint backend qui liste les arrêts de travail (work stoppages) d'un membre OH filtrés par date de début et statut (validated/pending). Lance /lm-reuse-discovery sur ces specs.",
+      "expected_output": "Should produce 5-10 feature needs (fetch stoppages by member, filter by date range, filter by status, serialize stoppage list, paginate). Candidates should include existing queries in backend/components/occupational_health/internal/business_logic/queries/admin_work_stoppages.py and existing Schemas for stoppages. No invented function names.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "/lm-reuse-discovery — Ajouter un écran admin frontend pour valider un IBAN avant un payment dans fr-app : input + bouton submit + feedback succès/erreur.",
+      "expected_output": "Feature needs include: render IBAN input, validate IBAN format (frontend), submit IBAN to backend, show success/error toast. Candidates should pull from frontend/shared design-system Input, existing IBAN validators (frontend or backend), useMutation hooks, and existing toast helpers. Should NOT propose to create everything from scratch.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Lance /lm-reuse-discovery en caller mode sur OHSET-298 : permettre à un employé d'uploader un justificatif d'arrêt maladie (PDF/JPG) qui sera attaché au work stoppage. Cross-stack feature.",
+      "expected_output": "Should return strict JSON output (caller mode, no user gate). Feature needs cover: upload file frontend (drag-drop component, file picker), generate S3 presigned URL backend, store attachment metadata, link to existing work_stoppage entity, factory for tests. Candidates should reference real shared upload utilities, S3 helpers, and existing stoppage factory. JSON structure must match the schema in SKILL.md Step 4.",
+      "files": []
+    }
+  ]
+}

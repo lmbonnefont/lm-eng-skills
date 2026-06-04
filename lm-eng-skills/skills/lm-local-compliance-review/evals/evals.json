@@ -1,0 +1,23 @@
+{
+  "skill_name": "local-compliance-review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/local-compliance-review",
+      "expected_output": "Should detect convention violations in the current branch diff — import layering, naming consistency with siblings, missing utilities (mandatory(), get_or_raise_missing_resource), structured logging issues, and production-readiness gaps (loading states, analytics, i18n). Each finding must have a Learn section pointing to a real file.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "/local-compliance-review — focus on the controller changes",
+      "expected_output": "Should focus specifically on controller files in the diff, checking for: inline imports of BL, @use_args usage, no logic in controllers, proper schema naming. Should still read sibling controllers to verify consistency.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "check my code for convention issues before I open the PR",
+      "expected_output": "Should trigger the local-compliance-review skill via natural language. Same output as eval 1 — P1/P2/P3 findings with Learn sections and interactive prompt at the end.",
+      "files": []
+    }
+  ]
+}

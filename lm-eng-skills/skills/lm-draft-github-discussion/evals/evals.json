@@ -1,0 +1,33 @@
+{
+  "skill_name": "lm-draft-github-discussion",
+  "evals": [
+    {
+      "id": 1,
+      "name": "framing-with-linear-link",
+      "prompt": "j'aimerais ouvrir une framing discussion sur alan-eu/Topics pour OHSET-456. Cette feature elle vise a permettre aux admin OH de re-ouvrir un work stoppage cloturé par erreur. On a 3 façons possibles de le faire et je sais pas trop laquelle choisir. Audience c'est Marion, Elodie et l'eng team.",
+      "expected_output": "Framing discussion in English, with the blockquote at top (problem/measure/ask), 3 options with trade-offs, recommendation stated, pings Marion + Elodie by name, audit checklist visible at the end. Should have called lm-grill-me before drafting.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "scoping-from-slack-signal",
+      "prompt": "On a eu plein de remontées dans #area_occhealth sur la lenteur du dashboard admin OH quand y a beaucoup de salariés en arrêt. Genre 5+ secondes pour charger. Je sais pas si ça vaut le coup d'investir, du coup je veux faire une scoping discussion pour décider.",
+      "expected_output": "Scoping discussion 10-15 lines, T-shirt cost estimate, what's been explored, open questions, explicit green-light/drop decision asked. Not a Framing template — should resist over-padding.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "making-with-product-tech-split",
+      "prompt": "On a aligné avec Marion sur OHSET-298 (auto-close des work stoppages à la date de retour). Maintenant je veux ouvrir une Making discussion pour aligner sur le V0 et le plan. Audience: eng + Marion + Elodie. Y'a un cron job à écrire et un feature flag a setup.",
+      "expected_output": "Making discussion with Product side / Technical side split (because cross-discipline audience), V0 in-scope/out-of-scope sections, milestones table, acceptance criteria checklist, feature flag plan, named approvers.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "quick-need-open-question",
+      "prompt": "Quick question pour la team OH — pour AMT V0 on a la liste de raisons de declare-reason. Est-ce qu'on devrait avoir une liste différente pour les TNS (self-employed) ou on peut reuse celle des salariés ? Je voudrais juste poser la question dans une GH discussion, pas un long framing, juste savoir ce qu'ils en pensent.",
+      "expected_output": "5-8 lines max. No fake structure (no Options, no Recommendation). Just context + the open question + ping by name. Category: Q&A. Should resist temptation to inflate into Framing.",
+      "files": []
+    }
+  ]
+}

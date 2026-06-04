@@ -1,0 +1,18 @@
+{
+  "name": "lm-eng-skills",
+  "owner": {
+    "name": "Louis-Marie Bonnefont",
+    "email": "louis-marie.bonnefont@alan.eu"
+  },
+  "metadata": {
+    "description": "Engineering workflow skills for alan-apps — review, feature development, debugging, comms",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "lm-eng-skills",
+      "description": "21 engineering skills + the Zero Trust Didactic output style for alan-apps development",
+      "source": "./lm-eng-skills"
+    }
+  ]
+}
