@@ -120,7 +120,7 @@ Invoque `lm-grill-me` en caller mode avec la bank du type :
 ```
 Skill(lm-grill-me) avec args :
   --caller lm-draft-github-discussion
-  --bank ~/.claude/skills/lm-draft-github-discussion/references/grill-bank.md
+  --bank references/grill-bank.md
   --section <scoping|framing|making|quick-need>
 ```
 
