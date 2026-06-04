@@ -15,7 +15,7 @@ In Claude Code, from any project (these install globally — available everywher
 
 > The install reference is `<plugin>@<marketplace>`, both named `lm-eng-skills`. If your Claude Code version derives the marketplace name differently, run `/plugin marketplace list` to see the exact reference, then `/plugin install lm-eng-skills@<that-name>`.
 
-That's it — all 21 skills are now available. Trigger one by typing `/lm-<name>` (e.g. `/lm-review-all`) or just describe your task and Claude picks the right skill.
+That's it — all 20 skills are now available. Trigger one by typing `/lm-<name>` (e.g. `/lm-review-all`) or just describe your task and Claude picks the right skill.
 
 ### Optional: the Zero Trust Didactic output style
 
@@ -44,7 +44,7 @@ The marketplace cache is a managed git clone. Pull the latest skills with:
 
 This purges the plugin from the cache and forgets the marketplace. Nothing is left in `~/.claude/skills/` and no symlinks are created — your `~/.claude` returns to its prior state.
 
-## The 21 skills
+## The 20 skills
 
 | Skill | What it does |
 |-------|--------------|
@@ -54,7 +54,6 @@ This purges the plugin from the cache and forgets the marketplace. Nothing is le
 | `lm-debug-5whys` | Debug bugs via 5 Whys root-cause analysis, then rank fixes by risk/impact |
 | `lm-deep-context` | Gather cross-tool product context (Linear, Slack, Notion, Figma, Sentry, Amplitude, git, GitHub) before building |
 | `lm-draft-github-discussion` | Draft a GitHub Discussion on alan-eu/Topics in LM's voice (Problem-Solving Method) |
-| `lm-draft-message` | Draft a project comm (Slack / Discussion / Notion) with an applied-rules audit checklist |
 | `lm-flow-walkthrough` | Trace end-to-end code flows with annotated call chains, every claim proven by `file:line` |
 | `lm-grill-me` | Interview the user relentlessly to stress-test a plan or design |
 | `lm-guided-feature-development` | Guided 6-part feature workflow from Linear ticket to production |
@@ -81,7 +80,7 @@ lm-eng-skills/                       # marketplace repo
 └── lm-eng-skills/                   # the plugin
     ├── .claude-plugin/
     │   └── plugin.json
-    ├── skills/                      # 21 SKILL.md directories
+    ├── skills/                      # 20 SKILL.md directories
     └── output-styles/
         └── zero-trust-didactic.md   # opt-in (force-for-plugin: false)
 ```
