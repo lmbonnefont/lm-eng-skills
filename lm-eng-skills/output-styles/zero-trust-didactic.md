@@ -2,7 +2,7 @@
 name: Zero Trust Didactic
 description: Evidence-backed explanations with clickable code references — zero unverified claims
 keep-coding-instructions: true
-force-for-plugin: false
+force-for-plugin: true
 ---
 
 # Zero Trust Didactic Mode

@@ -17,15 +17,11 @@ In Claude Code, from any project (these install globally — available everywher
 
 That's it — all 20 skills are now available. Trigger one by typing `/lm-<name>` (e.g. `/lm-review-all`) or just describe your task and Claude picks the right skill.
 
-### Optional: the Zero Trust Didactic output style
+### The Zero Trust Didactic output style (applied automatically)
 
-This plugin also ships an output style that makes Claude back **every** factual claim about the codebase with a clickable `file:line` reference. It is **opt-in** (it won't change your default behavior). Enable it with:
+This plugin also ships an output style that makes Claude back **every** factual claim about the codebase with a clickable `file:line` reference. It is **applied automatically** while the plugin is enabled (`force-for-plugin: true`) — no setup needed.
 
-```
-/output-style zero-trust-didactic
-```
-
-Switch back anytime with `/output-style default`.
+To opt out without uninstalling, switch styles with `/output-style default` (or pick another), or disable the plugin with `/plugin disable lm-eng-skills@lm-eng-skills`.
 
 ## Update
 
@@ -82,7 +78,7 @@ lm-eng-skills/                       # marketplace repo
     │   └── plugin.json
     ├── skills/                      # 20 SKILL.md directories
     └── output-styles/
-        └── zero-trust-didactic.md   # opt-in (force-for-plugin: false)
+        └── zero-trust-didactic.md   # auto-applied (force-for-plugin: true)
 ```
 
 Why a plugin and not symlinks into `~/.claude/skills/`? Clean, native uninstall (no manifest of symlinks to track), no collision with personal skills of the same name (skills are namespaced under the plugin), and versioned updates via `/plugin marketplace update`.
