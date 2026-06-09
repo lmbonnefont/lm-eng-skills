@@ -1,24 +1,23 @@
 ---
 name: lm-draft-github-discussion
 description: >
-  Rédige une GitHub Discussion sur alan-eu/Topics dans la voix de Louis-Marie, après
-  avoir cadré le contenu via /lm-grill-me. Applique la Problem-Solving Method d'Alan
-  (Scoping / Framing / Making) + la critique reçue le 2026-06-01 de Marion Doumeingts
-  sur la discussion Work Stoppage : la clarté doit apparaître DANS LES 3 PREMIÈRES
-  LIGNES (problem / measure / options / decision needed). Adapte la longueur au type :
-  Quick need = 5-8 lignes, Framing = long-form structuré, Scoping = 10-15 lignes,
-  Making = medium avec split product/tech.
-  Utiliser quand : /lm-draft-github-discussion, "create a GH discussion", "draft a
-  framing discussion for [project]", "open a discussion on alan-eu/Topics about X",
-  "scoping discussion pour [topic]", "écris une discussion Making pour [feature]",
-  "GitHub Discussion sur [Linear ticket]", "frame [problem] for the team", "discussion
-  pour cadrer [besoin]", "draft a problem statement for [topic]", "rédige une
-  discussion pour aligner sur [decision]".
-  Aussi quand l'utilisateur partage une URL Linear/Slack/Notion et dit "fais-en une
-  GH discussion".
-  Ne pas utiliser pour : Slack messages (utiliser /lm-draft-message), Notion updates
-  (utiliser /lm-draft-message), PR descriptions (utiliser /update-pr-description),
-  commit messages, replies dans une discussion existante (juste rédiger directement).
+  Drafts a GitHub Discussion on alan-eu/Topics in Louis-Marie's voice, after framing the
+  content via /lm-grill-me. Applies Alan's Problem-Solving Method (Scoping / Framing /
+  Making) + the feedback received on 2026-06-01 from Marion Doumeingts on the Work
+  Stoppage discussion: clarity must appear IN THE FIRST 3 LINES (problem / measure /
+  options / decision needed). Adapts length to the type: Quick need = 5-8 lines,
+  Framing = structured long-form, Scoping = 10-15 lines, Making = medium with a
+  product/tech split.
+  Use when: /lm-draft-github-discussion, "create a GH discussion", "draft a framing
+  discussion for [project]", "open a discussion on alan-eu/Topics about X", "scoping
+  discussion for [topic]", "write a Making discussion for [feature]", "GitHub Discussion
+  for [Linear ticket]", "frame [problem] for the team", "draft a problem statement for
+  [topic]", "écris une discussion Making pour [feature]", "discussion pour cadrer [besoin]",
+  "rédige une discussion pour aligner sur [decision]". Also when the user shares a
+  Linear/Slack/Notion URL and says "make it a GH discussion".
+  Not for: Slack messages (use /lm-draft-message), Notion updates (use /lm-draft-message),
+  PR descriptions (use /update-pr-description), commit messages, replies in an existing
+  discussion (just write directly).
 ---
 
 # lm-draft-github-discussion

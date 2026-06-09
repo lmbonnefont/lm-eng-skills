@@ -1,14 +1,15 @@
 ---
 name: lm-flow-walkthrough
 description: >
-  Trace et explique des flows de code de bout en bout avec des call chains annotées
-  et des explications narratives. Chaque affirmation est prouvée par une référence fichier:ligne.
-  Utiliser quand : /lm-flow-walkthrough, "trace le flow de X", "comment fonctionne X",
-  "walk me through X", "explique le flow de l'endpoint Y jusqu'à la DB",
-  "qu'est-ce qui se passe quand Z", "how does X work in the codebase".
-  Aussi appelable en mode caller depuis d'autres skills (ex: lm-guided-feature-development Part 2).
-  Ne pas utiliser pour : overviews d'architecture statiques (utiliser /xray),
-  documentation de librairies (utiliser /explore-lib).
+  Trace and explain end-to-end code flows with annotated call chains and narrative
+  explanations. Every claim is proven by a file:line reference.
+  Use when: /lm-flow-walkthrough, "trace the flow of X", "how does X work",
+  "walk me through X", "explain the flow from endpoint Y to the DB",
+  "what happens when Z", "how does X work in the codebase",
+  "trace le flow de X", "comment fonctionne X", "explique le flow de l'endpoint Y jusqu'à la DB",
+  "qu'est-ce qui se passe quand Z".
+  Also callable in caller mode from other skills (e.g. lm-guided-feature-development Part 2).
+  Not for: static architecture overviews (use /xray), library documentation (use /explore-lib).
 ---
 
 # Flow Walkthrough

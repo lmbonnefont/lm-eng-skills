@@ -1,15 +1,15 @@
 ---
 name: lm-oh-amplitude-sync
 description: >
-  Synchronise les events analytics Occupational Health (OH) du codebase alan-apps
-  avec le dashboard Amplitude "Prévenir — Dashboard Usage" (ID 8zjhveo3).
-  Détecte les events manquants, crée des charts Amplitude groupés par feature,
-  et réécrit la section 🆕 New Features avec les tickets Linear des 12 dernières semaines.
-  Utiliser quand : /lm-oh-amplitude-sync, "sync les events OH dans Amplitude",
-  "mets à jour le dashboard OH", "quels events OH ne sont pas dans le dashboard",
-  "refresh la section New Features du dashboard Prévenir", "audit events OH",
-  "quels nouveaux events OH tracker depuis 12 semaines".
-  Ne pas utiliser pour : dashboards d'autres équipes, events non-OH, création de dashboards from scratch.
+  Syncs the Occupational Health (OH) analytics events from the alan-apps codebase with
+  the Amplitude dashboard "Prévenir — Dashboard Usage" (ID 8zjhveo3). Detects missing
+  events, creates Amplitude charts grouped by feature, and rewrites the 🆕 New Features
+  section with the Linear tickets from the last 12 weeks.
+  Use when: /lm-oh-amplitude-sync, "sync the OH events in Amplitude", "update the OH
+  dashboard", "which OH events are not in the dashboard", "refresh the New Features
+  section of the Prévenir dashboard", "audit OH events", "which new OH events to track
+  over the last 12 weeks", "sync les events OH dans Amplitude", "mets à jour le dashboard OH".
+  Not for: other teams' dashboards, non-OH events, creating dashboards from scratch.
 ---
 
 # lm-oh-amplitude-sync

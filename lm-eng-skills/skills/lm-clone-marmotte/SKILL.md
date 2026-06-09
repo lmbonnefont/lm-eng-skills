@@ -1,21 +1,21 @@
 ---
 name: lm-clone-marmotte
 description: >
-  Extrait l'implémentation surface (frontend + backend) d'une feature Marmot
-  (outil admin Alan) pour permettre sa réplication ailleurs — typiquement dans
-  l'admin Occupational Health. Produit un blueprint markdown shallow avec liens
-  cliquables fichier:ligne pour route, screen, composants, hooks API,
-  endpoints, schemas et BL appelée.
-  Utiliser quand : `/lm-clone-marmotte`, "clone marmotte de [feature]",
-  "extrait l'implémentation de [X] dans Marmot",
-  "blueprint Marmot pour [URL]", URL `marmot.alan.com/...` collée,
+  Extract the surface implementation (frontend + backend) of a Marmot feature
+  (Alan's admin tool) so it can be replicated elsewhere — typically in the
+  Occupational Health admin. Produces a shallow markdown blueprint with clickable
+  file:line links for the route, screen, components, API hooks, endpoints, schemas,
+  and the business logic called.
+  Use when: `/lm-clone-marmotte`, "clone the [feature] from Marmot",
+  "extract the implementation of [X] in Marmot", "Marmot blueprint for [URL]",
+  a `marmot.alan.com/...` URL pasted, "how is [admin screen] built so I can replicate it",
+  "give me the source code of [Marmot feature]", "I want to copy [feature] from Marmot to OH admin",
+  "clone marmotte de [feature]", "extrait l'implémentation de [X] dans Marmot",
   "comment est fait [écran admin] que je veux répliquer",
-  "donne-moi le code source de [feature Marmot]",
   "je veux copier [feature] de Marmot vers OH admin".
-  Aussi générique pour d'autres apps (fr-app, be-app...) si l'utilisateur
-  précise l'app — Marmot par défaut.
-  Ne pas utiliser pour : trace de flow E2E (utiliser `/lm-flow-walkthrough`),
-  overview architecture statique (utiliser `/xray`).
+  Also generic for other apps (fr-app, be-app...) if the user specifies the app —
+  Marmot by default.
+  Not for: E2E flow tracing (use `/lm-flow-walkthrough`), static architecture overview (use `/xray`).
 ---
 
 # Clone Marmotte

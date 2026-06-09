@@ -1,21 +1,21 @@
 ---
 name: lm-reuse-discovery
 description: >
-  Chasse activement les fonctions, hooks, composants, types, factories et utils
-  qui existent déjà dans le repo et peuvent couvrir les besoins d'une feature en
-  cours de design — pour éviter de dupliquer ce qui est déjà écrit. Décompose
-  les specs en feature needs atomiques, lance une recherche parallèle dans
-  4 scopes (backend Python, frontend TS, types/schemas, tests/factories), score
-  les candidats (high/medium/low), retourne JSON structuré + résumé groupé par
-  besoin avec liens `fichier:ligne`. Utiliser quand : `/lm-reuse-discovery`,
-  "qu'est-ce qu'on peut réutiliser pour X", "y a-t-il déjà une fonction qui fait
-  Y", "trouve les helpers existants pour Z", "anti-duplication check sur cette
-  feature", "find reusable code for [feature]", "before I build X what already
-  exists". Aussi appelable en **caller mode** depuis `lm-guided-feature-development`
-  Part 2 (étape Reuse Discovery, entre flow walkthrough et architecture proposal).
-  Ne pas utiliser pour : trace de flow E2E (utiliser `/lm-flow-walkthrough`),
-  overview d'architecture (utiliser `/xray`), documentation de librairies
-  externes (utiliser `/explore-lib`).
+  Actively hunts for functions, hooks, components, types, factories, and utils that
+  already exist in the repo and could cover the needs of a feature being designed —
+  to avoid duplicating what is already written. Breaks the specs into atomic feature
+  needs, runs a parallel search across 4 scopes (backend Python, frontend TS,
+  types/schemas, tests/factories), scores candidates (high/medium/low), and returns
+  structured JSON + a summary grouped by need with `file:line` links.
+  Use when: `/lm-reuse-discovery`, "what can we reuse for X", "is there already a
+  function that does Y", "find existing helpers for Z", "anti-duplication check on this
+  feature", "find reusable code for [feature]", "before I build X what already exists",
+  "qu'est-ce qu'on peut réutiliser pour X", "y a-t-il déjà une fonction qui fait Y",
+  "trouve les helpers existants pour Z". Also callable in **caller mode** from
+  `lm-guided-feature-development` Part 2 (Reuse Discovery step, between flow walkthrough
+  and architecture proposal).
+  Not for: E2E flow tracing (use `/lm-flow-walkthrough`), architecture overview (use
+  `/xray`), external library documentation (use `/explore-lib`).
 ---
 
 # Reuse Discovery

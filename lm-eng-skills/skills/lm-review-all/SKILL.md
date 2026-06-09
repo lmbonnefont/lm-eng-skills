@@ -1,17 +1,16 @@
 ---
 name: lm-review-all
 description: >
-  Revue complète d'une PR : lance /review (bugs, qualité, tests), /lm-local-compliance-review
-  (conventions, ruler rules), /lm-ux-delight (micro-améliorations UX), /lm-reviewer-rules
-  (règles extraites des reviews de Bastien Landre & Mickaël Berguem), /lm-hardcore-review
-  (revue thermo-nucléaire qualité structurelle, code judo, spaghetti) en parallèle, plus
-  un 6ème agent Context Walkthrough qui produit résumé non-technique + glossaire + flow via
-  /lm-flow-walkthrough affiché en préambule avant les findings. Agrège les findings en
-  rapport P0-P3 avec badges source. Utiliser quand : /lm-review-all, "revue complète",
-  "full review", "review everything", "all reviews on PR #123", "lance toutes les revues",
-  ou toute demande de lancer plusieurs revues sur les mêmes changements. Aussi utiliser
-  quand l'utilisateur demande une revue approfondie avant merge ou avant de demander un
-  review humain.
+  Complete review of a PR: runs /review (bugs, quality, tests), /lm-local-compliance-review
+  (conventions, ruler rules), /lm-ux-delight (UX micro-improvements), /lm-reviewer-rules
+  (rules extracted from Bastien Landre & Mickaël Berguem's reviews), /lm-hardcore-review
+  (thermonuclear structural-quality review, code judo, spaghetti) in parallel, plus a
+  6th Context Walkthrough agent producing a non-technical summary + glossary + flow via
+  /lm-flow-walkthrough, shown as a preamble before the findings. Aggregates findings into
+  a P0-P3 report with source badges. Use when: /lm-review-all, "full review", "review
+  everything", "all reviews on PR #123", "revue complète", "lance toutes les revues", or
+  any request to run several reviews on the same changes. Also use when the user asks for
+  a thorough review before merge or before requesting a human review.
 ---
 
 # Revue Complète (orchestrée)
