@@ -1,116 +1,116 @@
 ---
 name: lm-clone-marmotte
 description: >
-  Extract the surface implementation (frontend + backend) of a Marmot feature
-  (Alan's admin tool) so it can be replicated elsewhere — typically in the
-  Occupational Health admin. Produces a shallow markdown blueprint with clickable
-  file:line links for the route, screen, components, API hooks, endpoints, schemas,
-  and the business logic called.
-  Use when: `/lm-clone-marmotte`, "clone the [feature] from Marmot",
-  "extract the implementation of [X] in Marmot", "Marmot blueprint for [URL]",
-  a `marmot.alan.com/...` URL pasted, "how is [admin screen] built so I can replicate it",
-  "give me the source code of [Marmot feature]", "I want to copy [feature] from Marmot to OH admin",
-  "clone marmotte de [feature]", "extrait l'implémentation de [X] dans Marmot",
-  "comment est fait [écran admin] que je veux répliquer",
-  "je veux copier [feature] de Marmot vers OH admin".
-  Also generic for other apps (fr-app, be-app...) if the user specifies the app —
-  Marmot by default.
-  Not for: E2E flow tracing (use `/lm-flow-walkthrough`), static architecture overview (use `/xray`).
+  Extracts the surface implementation (frontend + backend) of a Marmot feature
+  (Alan admin tool) to enable replicating it elsewhere — typically in the
+  Occupational Health admin. Produces a shallow markdown blueprint with
+  clickable file:line links for the route, screen, components, API hooks,
+  endpoints, schemas and the BL it calls.
+  Use when: `/lm-clone-marmotte`, "clone marmotte de [feature]" / "clone marmotte of [feature]",
+  "extrait l'implémentation de [X] dans Marmot" / "extract the implementation of [X] in Marmot",
+  "blueprint Marmot pour [URL]" / "Marmot blueprint for [URL]", a pasted `marmot.alan.com/...` URL,
+  "comment est fait [écran admin] que je veux répliquer" / "how is [admin screen] built that I want to replicate",
+  "donne-moi le code source de [feature Marmot]" / "give me the source code of [Marmot feature]",
+  "je veux copier [feature] de Marmot vers OH admin" / "I want to copy [feature] from Marmot to OH admin".
+  Also generic for other apps (fr-app, be-app...) if the user specifies the app
+  — Marmot by default.
+  Do not use for: tracing an E2E flow (use `/lm-flow-walkthrough`),
+  static architecture overview (use `/xray`).
 ---
 
 # Clone Marmotte
 
-Extrait le squelette d'implémentation **shallow** d'une feature Marmot (ou autre app admin) pour faciliter sa réplication. Couverture : route → screen → composants → hooks API → controllers → schemas → BL appelée. **On s'arrête à la fonction BL** (pas de descente dans queries, models, ORM). Si l'utilisateur veut deep dive, rediriger vers `/lm-flow-walkthrough`.
+Extracts the **shallow** implementation skeleton of a Marmot feature (or other admin app) to make replicating it easier. Coverage: route → screen → components → API hooks → controllers → schemas → the BL it calls. **We stop at the BL function** (no descent into queries, models, ORM). If the user wants a deep dive, redirect to `/lm-flow-walkthrough`.
 
-**Règle fondamentale** : chaque référence est `chemin/fichier.ext:LIGNE` cliquable, en dehors des code blocks. Si un élément ne peut pas être prouvé par lecture/grep, le flagguer `[GAP: raison]`.
-
----
-
-## Conventions Marmot à connaître
-
-- Frontend Marmot : `frontend/apps/fr-marmot/`
-  - Routes : `frontend/apps/fr-marmot/routes/`
-  - Screens : sous `frontend/apps/fr-marmot/.../screens/` ou `pages/`
-  - API client : `AdminCamelCaseApi` (alias `camelCaseAdminApi`) défini dans `frontend/apps/fr-marmot/backend.ts`
-    - Méthodes : `get(path)`, `post(path, body)`, `patch(path, body)`, `delete(path)`
-    - Conversion auto snake_case ↔ camelCase
-- Backend Marmot : controllers dans `backend/components/*/internal/*/controllers/marmot/`
-  - Route prefix : `/api/...`
-  - Décorateurs Flask + `@use_args` avec schemas Marshmallow `Marmot*Args`
-  - BL importée **inline** (dans le corps de la fonction), pas en haut du fichier
-  - BL accepte des IDs (pas des objets ORM), retourne des dataclasses
+**Fundamental rule**: every reference is a clickable `path/file.ext:LINE`, outside of code blocks. If an element cannot be proven by reading/grep, flag it `[GAP: reason]`.
 
 ---
 
-## Step 0 — Résolution input
+## Marmot conventions to know
 
-`$ARGUMENTS` peut être :
+- Marmot frontend: `frontend/apps/fr-marmot/`
+  - Routes: `frontend/apps/fr-marmot/routes/`
+  - Screens: under `frontend/apps/fr-marmot/.../screens/` or `pages/`
+  - API client: `AdminCamelCaseApi` (alias `camelCaseAdminApi`) defined in `frontend/apps/fr-marmot/backend.ts`
+    - Methods: `get(path)`, `post(path, body)`, `patch(path, body)`, `delete(path)`
+    - Automatic snake_case ↔ camelCase conversion
+- Marmot backend: controllers in `backend/components/*/internal/*/controllers/marmot/`
+  - Route prefix: `/api/...`
+  - Flask decorators + `@use_args` with Marshmallow schemas `Marmot*Args`
+  - BL imported **inline** (in the function body), not at the top of the file
+  - BL accepts IDs (not ORM objects), returns dataclasses
 
-| Pattern | Type | Stratégie |
+---
+
+## Step 0 — Input resolution
+
+`$ARGUMENTS` can be:
+
+| Pattern | Type | Strategy |
 |---|---|---|
-| URL `marmot.alan.com/...` | URL | Parse path, grep dans `frontend/apps/fr-marmot/routes/` |
-| Texte libre ("page édition contrats") | concept | Grep keywords dans `frontend/apps/fr-marmot/`, ranking screens > routes > components |
-| Chemin fichier explicite | file | Read direct |
-| Mention d'autre app ("dans fr-app", "be-marmot") | scope override | Remplacer `fr-marmot` par l'app cible |
+| URL `marmot.alan.com/...` | URL | Parse the path, grep in `frontend/apps/fr-marmot/routes/` |
+| Free text ("contract edit page") | concept | Grep keywords in `frontend/apps/fr-marmot/`, ranking screens > routes > components |
+| Explicit file path | file | Read directly |
+| Mention of another app ("in fr-app", "be-marmot") | scope override | Replace `fr-marmot` with the target app |
 
-Si plusieurs candidats plausibles, utiliser `AskUserQuestion` :
-"J'ai trouvé plusieurs entrées possibles. Laquelle ?" — chaque option = `fichier:ligne — description 1 ligne`.
-
----
-
-## Step 1 — Pré-filtre scope
-
-Avant l'extraction, demander via `AskUserQuestion` :
-- **Frontend uniquement** — extrait seulement la partie UI
-- **Backend uniquement** — extrait seulement les endpoints + BL
-- **Frontend + backend** (défaut) — extrait tout
-
-Mémoriser le choix pour Step 2 et Step 3. Pas de re-filtrage après l'extraction — ce qui est extrait est livré tel quel.
+If multiple plausible candidates, use `AskUserQuestion`:
+"I found several possible entries. Which one?" — each option = `file:line — one-line description`.
 
 ---
 
-## Step 2 — Extraction shallow
+## Step 1 — Scope pre-filter
 
-Paralléliser autant que possible (Grep multiples en parallèle).
+Before extraction, ask via `AskUserQuestion`:
+- **Frontend only** — extract only the UI part
+- **Backend only** — extract only the endpoints + BL
+- **Frontend + backend** (default) — extract everything
 
-### Frontend (si dans le scope)
-
-1. **Route** : depuis l'URL ou le screen, identifier la définition de route dans `frontend/apps/fr-marmot/routes/` → `fichier:LIGNE` + path
-2. **Screen** : composant pointé par la route → `fichier:LIGNE` + 1 ligne de description
-3. **Composants UI** : grep les imports de composants depuis le screen (1 niveau seulement). Lister chaque composant avec son rôle. Ne pas trace deep.
-4. **Hooks API** : grep `camelCaseAdminApi.(get|post|patch|delete)\(` dans le sous-arbre du screen et ses enfants directs. Pour chaque match : capturer méthode + path + `fichier:LIGNE`
-5. Si un hook custom (ex `useFooData`) wrappe l'appel API, le résoudre une fois (pas plus)
-
-### Backend (si dans le scope)
-
-Pour chaque endpoint identifié (depuis le frontend OU fourni en input direct) :
-
-1. **Controller** : grep le path dans `backend/components/*/internal/*/controllers/marmot/` (route decorators) → `fichier:LIGNE` de la fonction handler
-2. **Schema args** : identifier le `@use_args(MarmotXxxArgs)` ou équivalent → `fichier:LIGNE`
-3. **BL appelée** : repérer l'import inline dans le corps + le call site → `fichier:LIGNE` de la fonction BL avec sa signature (paramètres + type retour)
-
-**Stop ici** : on ne descend pas dans la BL elle-même, on n'inspecte pas les models, on ne suit pas les sous-appels. Le but est un squelette à imiter, pas un audit complet.
-
-Si une étape n'est pas résolvable (dispatch dynamique, country-specific via plugin), flagguer `[GAP: raison]`.
+Remember the choice for Step 2 and Step 3. No re-filtering after extraction — what is extracted is delivered as is.
 
 ---
 
-## Step 3 — Production de l'output
+## Step 2 — Shallow extraction
 
-### Sauvegarde fichier
+Parallelize as much as possible (multiple Greps in parallel).
 
-Path : `tmp/agent-scratch/clone-marmotte-{slug}.md` (slug dérivé du nom de feature, kebab-case).
+### Frontend (if in scope)
 
-Si `tmp/agent-scratch/` n'existe pas (hors monorepo alan-apps), fallback `/tmp/clone-marmotte-{slug}.md`.
+1. **Route**: from the URL or the screen, identify the route definition in `frontend/apps/fr-marmot/routes/` → `file:LINE` + path
+2. **Screen**: component pointed to by the route → `file:LINE` + 1-line description
+3. **UI components**: grep the component imports from the screen (1 level only). List each component with its role. Do not trace deep.
+4. **API hooks**: grep `camelCaseAdminApi.(get|post|patch|delete)\(` in the screen's subtree and its direct children. For each match: capture method + path + `file:LINE`
+5. If a custom hook (e.g. `useFooData`) wraps the API call, resolve it once (no more)
 
-### Structure du markdown
+### Backend (if in scope)
+
+For each identified endpoint (from the frontend OR provided as direct input):
+
+1. **Controller**: grep the path in `backend/components/*/internal/*/controllers/marmot/` (route decorators) → `file:LINE` of the handler function
+2. **Schema args**: identify the `@use_args(MarmotXxxArgs)` or equivalent → `file:LINE`
+3. **BL called**: find the inline import in the body + the call site → `file:LINE` of the BL function with its signature (parameters + return type)
+
+**Stop here**: we do not descend into the BL itself, we do not inspect the models, we do not follow sub-calls. The goal is a skeleton to imitate, not a complete audit.
+
+If a step is not resolvable (dynamic dispatch, country-specific via plugin), flag it `[GAP: reason]`.
+
+---
+
+## Step 3 — Output production
+
+### File save
+
+Path: `tmp/agent-scratch/clone-marmotte-{slug}.md` (slug derived from the feature name, kebab-case).
+
+If `tmp/agent-scratch/` does not exist (outside the alan-apps monorepo), fall back to `/tmp/clone-marmotte-{slug}.md`.
+
+### Markdown structure
 
 ```
 # Clone Marmotte — {Feature name}
 
-**Source** : {URL ou description fournie}
-**Scope extrait** : frontend | backend | les deux
-**Date** : {YYYY-MM-DD}
+**Source**: {provided URL or description}
+**Extracted scope**: frontend | backend | both
+**Date**: {YYYY-MM-DD}
 
 ## Frontend
 
@@ -118,15 +118,15 @@ Si `tmp/agent-scratch/` n'existe pas (hors monorepo alan-apps), fallback `/tmp/c
 - frontend/apps/fr-marmot/routes/Foo.tsx:42 — pattern `/admin/foo/:id`
 
 ### Screen
-- frontend/apps/fr-marmot/.../FooEditScreen.tsx:18 — écran d'édition de Foo
+- frontend/apps/fr-marmot/.../FooEditScreen.tsx:18 — Foo edit screen
 
-### Composants utilisés
-| Composant | Fichier | Rôle |
+### Components used
+| Component | File | Role |
 |---|---|---|
-| FooTable | frontend/.../FooTable.tsx:12 | tableau des entrées Foo |
-| FooForm | frontend/.../FooForm.tsx:8 | form d'édition |
+| FooTable | frontend/.../FooTable.tsx:12 | table of Foo entries |
+| FooForm | frontend/.../FooForm.tsx:8 | edit form |
 
-### Appels API (HTTP boundaries)
+### API calls (HTTP boundaries)
 | Method | Path | Call site |
 |---|---|---|
 | GET | /admin/foo/:id | frontend/.../FooEditScreen.tsx:34 |
@@ -135,112 +135,112 @@ Si `tmp/agent-scratch/` n'existe pas (hors monorepo alan-apps), fallback `/tmp/c
 ## Backend
 
 ### `GET /admin/foo/:id` — backend/components/fr/internal/foo/controllers/marmot/foo.py:45
-- Schema args : `MarmotFooGetArgs` → backend/.../schemas/marmot.py:23
-- BL appelée : `get_foo(foo_id: int) -> FooEntity` → backend/.../business_logic/queries/foo.py:18
+- Schema args: `MarmotFooGetArgs` → backend/.../schemas/marmot.py:23
+- BL called: `get_foo(foo_id: int) -> FooEntity` → backend/.../business_logic/queries/foo.py:18
 
 ### `PATCH /admin/foo/:id` — backend/components/fr/internal/foo/controllers/marmot/foo.py:78
-- Schema args : `MarmotFooPatchArgs` → backend/.../schemas/marmot.py:56
-- BL appelée : `update_foo(foo_id: int, args: MarmotFooPatchArgs) -> FooEntity` → backend/.../business_logic/actions/foo.py:42
+- Schema args: `MarmotFooPatchArgs` → backend/.../schemas/marmot.py:56
+- BL called: `update_foo(foo_id: int, args: MarmotFooPatchArgs) -> FooEntity` → backend/.../business_logic/actions/foo.py:42
 
-## Patterns observés
-- Imports inline BL dans controllers (convention alan-apps)
+## Observed patterns
+- Inline BL imports in controllers (alan-apps convention)
 - ...
 
 ## Gaps
-- [GAP] Le calcul de X passe par `get_plugin()` — résolution runtime, voir candidats : ...
+- [GAP] The computation of X goes through `get_plugin()` — runtime resolution, see candidates: ...
 ```
 
-**Important pour les liens cliquables** :
-- Format `chemin/fichier.ext:LINE` **en dehors** des code blocks (sinon non-rendu)
-- Dans les tableaux, écrire les paths comme texte simple (pas backtickés). Le terminal Claude Code les rend cliquables.
-- Voir feedback memory : `feedback_no_links_in_codeblocks.md`
+**Important for clickable links**:
+- Format `path/file.ext:LINE` **outside** of code blocks (otherwise not rendered)
+- In tables, write paths as plain text (not backticked). The Claude Code terminal renders them as clickable.
+- See feedback memory: `feedback_no_links_in_codeblocks.md`
 
-### Affichage dans la conversation
+### Display in the conversation
 
-En plus du fichier sauvegardé, afficher un **résumé condensé** (~30 lignes max) avec :
-- Le path absolu du fichier sauvegardé
-- Liste numérotée des entrées clés (route, screen, top 3 endpoints) avec liens
-- Note "Voir le fichier complet pour les détails"
+In addition to the saved file, display a **condensed summary** (~30 lines max) with:
+- The absolute path of the saved file
+- A numbered list of key entries (route, screen, top 3 endpoints) with links
+- A note "See the full file for details"
 
 ---
 
-## Step 4 — Recommandations UX (via `/lm-ux-delight`)
+## Step 4 — UX recommendations (via `/lm-ux-delight`)
 
-Si le scope inclut le frontend, **invoquer la skill `lm-ux-delight`** en lui passant le path du blueprint markdown généré au Step 3.
+If the scope includes the frontend, **invoke the `lm-ux-delight` skill**, passing it the path of the markdown blueprint generated in Step 3.
 
 ```
-Skill(skill="lm-ux-delight", args="--from-blueprint <path-absolu-du-md>")
+Skill(skill="lm-ux-delight", args="--from-blueprint <absolute-path-of-the-md>")
 ```
 
-L'agent UX produit 3-5 micro-améliorations qui **préservent l'expérience source** mais rendent le flow plus fluide pour les admins OH. Récupérer son output et l'**appender** dans le markdown sauvegardé sous une section `## Améliorations UX suggérées` (avec note "préservent l'expérience Marmot existante, à discuter avant d'implémenter").
+The UX agent produces 3-5 micro-improvements that **preserve the source experience** but make the flow smoother for OH admins. Retrieve its output and **append** it to the saved markdown under a section `## Suggested UX improvements` (with the note "preserve the existing Marmot experience, to be discussed before implementing").
 
-Si scope = backend uniquement, **skipper Step 4**.
+If scope = backend only, **skip Step 4**.
 
-Si `lm-ux-delight` n'est pas disponible ou échoue, fallback : produire 2-3 suggestions inline simples (defaults, moins de clics, feedback après action) et flagguer `[lm-ux-delight indisponible]`.
+If `lm-ux-delight` is not available or fails, fall back: produce 2-3 simple inline suggestions (defaults, fewer clicks, feedback after an action) and flag `[lm-ux-delight unavailable]`.
 
 ---
 
-## Step 5 — Recommandations techniques anti-dette
+## Step 5 — Technical anti-debt recommendations
 
-But : pendant la réplication OH, **ne pas copier la dette technique** de la source. Identifier les patterns qui datent et proposer la version moderne.
+Goal: during the OH replication, **do not copy the technical debt** of the source. Identify outdated patterns and propose the modern version.
 
-**Cadre** :
+**Framing**:
 - 2-4 suggestions max
-- Cibler les patterns observés dans le blueprint qui sont **dépréciés ou contournés** par les conventions actuelles d'alan-apps
-- Vérifier les `.ruler/` files (`.ruler/`, `backend/.ruler/`, `frontend/.ruler/`) pour les conventions actuelles
-- Préférer les patterns documentés dans CLAUDE.md (voir "Conventions over existing code")
+- Target the patterns observed in the blueprint that are **deprecated or worked around** by the current alan-apps conventions
+- Check the `.ruler/` files (`.ruler/`, `backend/.ruler/`, `frontend/.ruler/`) for current conventions
+- Prefer the patterns documented in CLAUDE.md (see "Conventions over existing code")
 
-**Patterns rouges typiques à détecter** :
+**Typical red-flag patterns to detect**:
 
-| Pattern source (potentiellement dette) | Recommandation actuelle |
+| Source pattern (potentially debt) | Current recommendation |
 |---|---|
-| `Schema(Marshmallow)` classes | Migration vers `dataclass` + `class_schema()` (voir `/migrate-schema-to-dataclass`) |
-| `request_argument` / `request_arguments` | `@use_args` (voir `/migrate-request-argument`) |
-| `BaseController` (flask-restful) | `CustomMethodView` flask-smorest (voir `/migrate-base-controller`) |
-| Feature flags custom non LaunchDarkly | LaunchDarkly (voir `/migration-ff-to-launchdarkly`) |
-| Imports BL en haut de controller | Imports inline dans le corps (convention alan-apps) |
-| BL acceptant des objets ORM | BL doit accepter des IDs uniquement |
-| Queries retournant des entités ORM | Doivent retourner des dataclasses |
-| Tuples de retour anonymes | `NamedTuple` (préférence user) |
-| Composants frontend sans docstring TSDoc | Ajouter TSDoc au-dessus du composant (préférence user) |
-| Propriétés CSS physiques (`marginLeft`) | Logiques (`marginInlineStart`) si scope RTL |
-| Tests qui mockent la DB | Hit la vraie DB en tests d'intégration |
+| `Schema(Marshmallow)` classes | Migrate to `dataclass` + `class_schema()` (see `/migrate-schema-to-dataclass`) |
+| `request_argument` / `request_arguments` | `@use_args` (see `/migrate-request-argument`) |
+| `BaseController` (flask-restful) | `CustomMethodView` flask-smorest (see `/migrate-base-controller`) |
+| Custom feature flags not on LaunchDarkly | LaunchDarkly (see `/migration-ff-to-launchdarkly`) |
+| BL imports at the top of a controller | Inline imports in the body (alan-apps convention) |
+| BL accepting ORM objects | BL must accept IDs only |
+| Queries returning ORM entities | Must return dataclasses |
+| Anonymous return tuples | `NamedTuple` (user preference) |
+| Frontend components without a TSDoc docstring | Add TSDoc above the component (user preference) |
+| Physical CSS properties (`marginLeft`) | Logical (`marginInlineStart`) if RTL scope |
+| Tests that mock the DB | Hit the real DB in integration tests |
 
-**Format dans le markdown** :
+**Format in the markdown**:
 
 ```
-## Améliorations techniques suggérées (éviter la dette en répliquant)
+## Suggested technical improvements (avoid debt when replicating)
 
-> Note : la source utilise des patterns qui ont évolué dans alan-apps. Pour la réplique OH, préférer les conventions actuelles.
+> Note: the source uses patterns that have evolved in alan-apps. For the OH replica, prefer the current conventions.
 
-1. **[Pattern source détecté]** → **[recommandation moderne]**
-   - Fichier source : path:LINE
-   - Pourquoi : [raison courte, lien vers ruler ou skill de migration si applicable]
-   - Effort : XS / S / M
+1. **[detected source pattern]** → **[modern recommendation]**
+   - Source file: path:LINE
+   - Why: [short reason, link to ruler or migration skill if applicable]
+   - Effort: XS / S / M
 
 2. ...
 ```
 
-Si **aucune dette détectée**, écrire : "Aucune dette technique flagrante détectée — la source suit les conventions actuelles."
+If **no debt is detected**, write: "No blatant technical debt detected — the source follows the current conventions."
 
 ---
 
-Le skill se termine ici. Pas de re-filtrage post-extraction.
+The skill ends here. No post-extraction re-filtering.
 
 ---
 
-## Notes pour les autres apps
+## Notes for other apps
 
-Si l'utilisateur précise une app autre que Marmot (ex : `fr-app`, `be-app`, `eng-tools-server`) :
-- Remplacer `frontend/apps/fr-marmot/` par `frontend/apps/{app}/`
-- Backend : les controllers ne sont plus dans `controllers/marmot/` mais dans `controllers/` directement (ou `controllers/v2/`, etc.)
-- Adapter le client API : `fr-app` utilise `global-api` hooks (`useQuery`/`useMutation`), pas `AdminCamelCaseApi`
-- Marquer dans le frontmatter "Scope extrait" l'app utilisée
+If the user specifies an app other than Marmot (e.g. `fr-app`, `be-app`, `eng-tools-server`):
+- Replace `frontend/apps/fr-marmot/` with `frontend/apps/{app}/`
+- Backend: the controllers are no longer in `controllers/marmot/` but in `controllers/` directly (or `controllers/v2/`, etc.)
+- Adapt the API client: `fr-app` uses `global-api` hooks (`useQuery`/`useMutation`), not `AdminCamelCaseApi`
+- Mark the app used in the frontmatter "Extracted scope"
 
 ---
 
-## Limites
+## Limits
 
-- **Shallow uniquement** : on s'arrête à la signature de la BL côté back, à 1 niveau de composants côté front. Pas de récursion. Pour deep dive, suggérer `/lm-flow-walkthrough` sur l'endpoint concerné.
-- **Pas de scaffold** : ce skill produit un blueprint à lire, pas du code généré pour la cible.
-- **Pas de tests** dans le blueprint.
+- **Shallow only**: we stop at the BL signature on the backend, at 1 level of components on the frontend. No recursion. For a deep dive, suggest `/lm-flow-walkthrough` on the relevant endpoint.
+- **No scaffold**: this skill produces a blueprint to read, not generated code for the target.
+- **No tests** in the blueprint.

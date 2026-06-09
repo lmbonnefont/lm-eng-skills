@@ -28,6 +28,13 @@
       "prompt": "Quick question pour la team OH — pour AMT V0 on a la liste de raisons de declare-reason. Est-ce qu'on devrait avoir une liste différente pour les TNS (self-employed) ou on peut reuse celle des salariés ? Je voudrais juste poser la question dans une GH discussion, pas un long framing, juste savoir ce qu'ils en pensent.",
       "expected_output": "5-8 lines max. No fake structure (no Options, no Recommendation). Just context + the open question + ping by name. Category: Q&A. Should resist temptation to inflate into Framing.",
       "files": []
+    },
+    {
+      "id": 5,
+      "name": "framing-threaded-sub-decisions",
+      "prompt": "Je veux ouvrir une framing discussion sur alan-eu/Topics pour cadrer ce que les RH doivent pouvoir déclarer dans Prévenir à l'affiliation d'un salarié, pour qu'on soit compliant AFNOR. Y'a plusieurs sujets distincts là-dedans: les risques & expositions au niveau d'une population (obligation légale DUERP), les risques & expositions au niveau d'un salarié individuel (qui déclenche le type de suivi SI/SIA/SIR), les options pour aider les RH à sélectionner ces risques (genre par niveau de suivi vs par template de poste), et les flags de situation individuelle (grossesse, RQTH, mineur). Audience: l'area OccHealth, et je consulte Aïze, Williams, Alexandre et Arthur. Faut décider d'ici le 9 juin.",
+      "expected_output": "Threaded Framing: OP with the 6 H1 sections where # 💡 Proposal is a thread index (one bullet per sub-decision, emoji per thread), plus separate top-level thread comments ordered by progressivity (population/broad → individual employee → options/mechanism → individual situation flags → other last). Each thread self-contained (legal/data anchor + options with pros/cons + open question). English output, no em-dashes, LOCI populated, posting sequence (gh api) provided, audit checklist with thread-architecture block. Should detect the need for threads from the ≥2 independent sub-decisions and not cram them inline.",
+      "files": []
     }
   ]
 }

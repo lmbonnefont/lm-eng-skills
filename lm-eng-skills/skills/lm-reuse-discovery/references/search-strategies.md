@@ -1,25 +1,25 @@
-# Search Strategies par scope
+# Search Strategies by scope
 
-Patterns concrets pour chaque sous-agent. L'objectif est de couvrir les
-emplacements canoniques où la réutilisation devrait être trouvée, sans scanner
-tout le monorepo (76K+ fichiers).
+Concrete patterns for each subagent. The goal is to cover the canonical
+locations where reuse should be found, without scanning the entire monorepo
+(76K+ files).
 
 ## backend_python
 
-Chemins prioritaires (dans cet ordre) :
+Priority paths (in this order):
 
-1. **Même component que la feature** (si identifiable depuis les specs)
+1. **Same component as the feature** (if identifiable from the specs)
    - `backend/components/<component>/internal/business_logic/queries/`
    - `backend/components/<component>/internal/business_logic/actions/`
    - `backend/components/<component>/internal/business_logic/services/`
-   - `backend/components/<component>/public/` (interfaces inter-components)
-2. **Components voisins du même bounded context** (ex: OH ↔ contracting ↔ enrollment)
-3. **`backend/shared/`** — utils, helpers généralistes
-4. **`backend/components/*/internal/models/`** — méthodes d'instance / classmethods réutilisables
+   - `backend/components/<component>/public/` (inter-component interfaces)
+2. **Neighboring components in the same bounded context** (e.g. OH ↔ contracting ↔ enrollment)
+3. **`backend/shared/`** — generic utils, helpers
+4. **`backend/components/*/internal/models/`** — reusable instance methods / classmethods
 
-Patterns grep :
+Grep patterns:
 
-| Need contient... | Patterns |
+| Need contains... | Patterns |
 |---|---|
 | "fetch X", "get X by Y" | `def get_<entity>`, `def fetch_<entity>`, `def <entity>_by_` |
 | "create X", "build X" | `def create_<entity>`, `def build_<entity>`, `def make_<entity>` |
@@ -27,22 +27,22 @@ Patterns grep :
 | "format X", "serialize X" | `def format_<x>`, `class <X>Schema`, `def serialize_<x>` |
 | "send X" | `def send_<x>`, `def notify_<x>`, `def dispatch_<x>` |
 
-Skip `backend/apps/` (entry points, peu réutilisable) et `**/migrations/`.
+Skip `backend/apps/` (entry points, rarely reusable) and `**/migrations/`.
 
 ## frontend_ts
 
-Chemins prioritaires :
+Priority paths:
 
-1. **Même module/package** (si identifiable)
+1. **Same module/package** (if identifiable)
    - `frontend/packages/<module>/src/`
    - `frontend/apps/<app>/src/features/<feature>/`
-2. **`frontend/shared/`** — composants UI, hooks transverses
-3. **`frontend/packages/global-api/`** — hooks API générés / wrappers
-4. **`frontend/packages/design-system/`** — primitives UI
+2. **`frontend/shared/`** — UI components, cross-cutting hooks
+3. **`frontend/packages/global-api/`** — generated API hooks / wrappers
+4. **`frontend/packages/design-system/`** — UI primitives
 
-Patterns :
+Patterns:
 
-| Need contient... | Patterns |
+| Need contains... | Patterns |
 |---|---|
 | "render X", "X picker", "X form" | `export const <X>`, `function <X>(`, `\.tsx` files |
 | "fetch X", "use X data" | `export const use<X>`, `useQuery`, `useMutation` |
@@ -54,61 +54,61 @@ Skip `frontend/svg/`, `frontend/emojis/`, `**/__snapshots__/`, `*.lock`.
 
 ## types_schemas
 
-Couverture :
+Coverage:
 
-1. **Python dataclasses** : `@dataclass` decorators, `class_schema(<X>)`
-2. **Marshmallow Schemas** : `class <X>Schema(Schema)`, `class <X>Schema(ma.Schema)`
-3. **SQLAlchemy models** : `class <X>(Base)`, `class <X>(db.Model)` (mais flagguer : modifier un model = breaking change)
-4. **TS types** : `export type <X>`, `export interface <X>` dans `frontend/packages/*/src/types/`, `frontend/shared/*/types/`
-5. **Enums** : `class <X>(Enum)`, `enum <X>`, string union types
+1. **Python dataclasses**: `@dataclass` decorators, `class_schema(<X>)`
+2. **Marshmallow Schemas**: `class <X>Schema(Schema)`, `class <X>Schema(ma.Schema)`
+3. **SQLAlchemy models**: `class <X>(Base)`, `class <X>(db.Model)` (but flag: modifying a model = breaking change)
+4. **TS types**: `export type <X>`, `export interface <X>` in `frontend/packages/*/src/types/`, `frontend/shared/*/types/`
+5. **Enums**: `class <X>(Enum)`, `enum <X>`, string union types
 
-Patterns :
+Patterns:
 
-| Need mentionne... | Cherche... |
+| Need mentions... | Look for... |
 |---|---|
-| Entité domaine (Employment, Member, Stoppage) | Dataclass + Schema + TS type correspondant |
-| Statut/état (validated, pending, rejected) | Enums Python ou string unions TS |
-| Payload API request/response | Marshmallow Schema + TS type généré |
+| Domain entity (Employment, Member, Stoppage) | Corresponding dataclass + Schema + TS type |
+| Status/state (validated, pending, rejected) | Python enums or TS string unions |
+| API request/response payload | Marshmallow Schema + generated TS type |
 
 Skip migrations.
 
 ## tests_factories
 
-Couverture :
+Coverage:
 
-1. **Factories Python** : `backend/components/*/internal/models/tests/factories.py`, classes `factory.Factory`
-2. **Fixtures pytest** : `**/conftest.py`, fixtures decorated avec `@pytest.fixture`
-3. **Factories TS** : `frontend/packages/*/src/**/__factories__/`, `frontend/shared/test/`
-4. **MSW handlers** : `frontend/shared/test/msw/`, mock handlers réutilisables
-5. **Helpers de tests** : `**/test/helpers/`, `**/tests/utils.py`
+1. **Python factories**: `backend/components/*/internal/models/tests/factories.py`, `factory.Factory` classes
+2. **pytest fixtures**: `**/conftest.py`, fixtures decorated with `@pytest.fixture`
+3. **TS factories**: `frontend/packages/*/src/**/__factories__/`, `frontend/shared/test/`
+4. **MSW handlers**: `frontend/shared/test/msw/`, reusable mock handlers
+5. **Test helpers**: `**/test/helpers/`, `**/tests/utils.py`
 
-Patterns :
+Patterns:
 
-| Need... | Cherche... |
+| Need... | Look for... |
 |---|---|
-| Entité à instancier en test | `class <X>Factory(factory.Factory)`, `make<X>(`, `build<X>(` |
-| Fixture commune | `@pytest.fixture\ndef <name>` |
+| Entity to instantiate in a test | `class <X>Factory(factory.Factory)`, `make<X>(`, `build<X>(` |
+| Common fixture | `@pytest.fixture\ndef <name>` |
 | Mock API response | MSW handlers, `mock<X>Response` |
 
-## Raccourcis Glob utiles
+## Useful Glob shortcuts
 
 ```bash
-# Tous les factories Python
+# All Python factories
 glob "backend/components/*/internal/models/tests/factories.py"
 
-# Tous les hooks frontend
+# All frontend hooks
 glob "frontend/packages/*/src/**/use*.ts" "frontend/packages/*/src/**/use*.tsx"
 
-# Tous les schemas Marshmallow d'un component
+# All Marshmallow schemas of a component
 glob "backend/components/<X>/**/schemas/*.py"
 ```
 
-## Stratégie générale par need
+## General strategy per need
 
-1. **Identifier 2–3 tokens clés** dans le need (`fetch`, `employment`, `member_id`)
-2. **Grep le token principal** dans le scope prioritaire
-3. **Si > 50 résultats** : restreindre à la file pattern la plus probable (queries/, actions/, hooks/)
-4. **Read les top candidats** (max 5 par need) pour vérifier signature + usage
-5. **Grep usage** : `grep -r "get_employment_for_member(" backend/` → comptage approximatif de call sites
+1. **Identify 2–3 key tokens** in the need (`fetch`, `employment`, `member_id`)
+2. **Grep the main token** in the priority scope
+3. **If > 50 results**: narrow to the most likely file pattern (queries/, actions/, hooks/)
+4. **Read the top candidates** (max 5 per need) to verify signature + usage
+5. **Grep usage**: `grep -r "get_employment_for_member(" backend/` → rough count of call sites
 
-Budget par need : ~3–5 minutes max. Si rien trouvé après 2 stratégies de recherche → retourner `[]`.
+Budget per need: ~3–5 minutes max. If nothing found after 2 search strategies → return `[]`.

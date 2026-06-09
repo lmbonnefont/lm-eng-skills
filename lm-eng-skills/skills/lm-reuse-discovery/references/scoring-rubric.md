@@ -1,100 +1,100 @@
 # Scoring Rubric
 
-Chaque candidat est scoré sur 4 axes. **Score final = min des 4 axes** (le maillon le plus faible décide).
+Each candidate is scored on 4 axes. **Final score = min of the 4 axes** (the weakest link decides).
 
-## Axe 1 — Couverture
+## Axis 1 — Coverage
 
-À quel point le candidat couvre le need.
+How well the candidate covers the need.
 
-| Score | Critère |
+| Score | Criterion |
 |---|---|
-| **high** | Couvre le need exactement, sans wrapper. Le call site écrit `candidate(...)` directement. |
-| **medium** | Couvre le need avec un wrapper léger (1–3 lignes) ou un sous-set des paramètres. |
-| **low** | Couvre tangentiellement : même domaine, sortie partiellement utile, nécessite de l'extraction ou de la transformation. |
+| **high** | Covers the need exactly, without a wrapper. The call site writes `candidate(...)` directly. |
+| **medium** | Covers the need with a light wrapper (1–3 lines) or a subset of the parameters. |
+| **low** | Covers tangentially: same domain, partially useful output, requires extraction or transformation. |
 
-**Exemples** :
-- Need `fetch employment by member_id`, candidat `get_employment_for_member(member_id)` → **high**
-- Need `fetch employment by member_id`, candidat `get_member_with_employment(member_id)` (ramène aussi le member) → **medium**
-- Need `fetch employment by member_id`, candidat `list_employments_for_company(company_id)` → **low** (faut filtrer côté caller)
+**Examples**:
+- Need `fetch employment by member_id`, candidate `get_employment_for_member(member_id)` → **high**
+- Need `fetch employment by member_id`, candidate `get_member_with_employment(member_id)` (also brings back the member) → **medium**
+- Need `fetch employment by member_id`, candidate `list_employments_for_company(company_id)` → **low** (must filter on the caller side)
 
-## Axe 2 — Généricité
+## Axis 2 — Genericity
 
-Capacité à utiliser le candidat sans le modifier.
+Ability to use the candidate without modifying it.
 
-| Score | Critère |
+| Score | Criterion |
 |---|---|
-| **high** | Réutilisable as-is. API stable, paramètres clairs, pas de side-effects cachés. |
-| **medium** | Nécessite un nouveau paramètre optionnel pour couvrir le cas d'usage (extension non-breaking). |
-| **low** | Nécessite un fork ou une refonte ; les call sites existants supposent un comportement incompatible. |
+| **high** | Reusable as-is. Stable API, clear parameters, no hidden side-effects. |
+| **medium** | Requires a new optional parameter to cover the use case (non-breaking extension). |
+| **low** | Requires a fork or a rewrite; existing call sites assume incompatible behavior. |
 
-## Axe 3 — Proximité domaine
+## Axis 3 — Domain proximity
 
-À quel point le candidat appartient au bon contexte sémantique.
+How well the candidate belongs to the right semantic context.
 
-| Score | Critère |
+| Score | Criterion |
 |---|---|
-| **high** | Même component que la feature. Même bounded context. |
-| **medium** | Component voisin du même area (ex: OH ↔ contracting), ou shared/utils généraliste où l'usage est conventionnel. |
-| **low** | Component étranger, ou shared trop bas-niveau pour porter sémantique métier (ex: réutiliser un parser CSV pour parser un payload structuré). |
+| **high** | Same component as the feature. Same bounded context. |
+| **medium** | Neighboring component in the same area (e.g. OH ↔ contracting), or generic shared/utils where the usage is conventional. |
+| **low** | Foreign component, or shared too low-level to carry business semantics (e.g. reusing a CSV parser to parse a structured payload). |
 
-## Axe 4 — Maturité
+## Axis 4 — Maturity
 
-Confiance dans le candidat.
+Confidence in the candidate.
 
-| Score | Critère |
+| Score | Criterion |
 |---|---|
-| **high** | Testé (présence de tests), utilisé ≥ 3 call sites, stable depuis plusieurs commits. |
-| **medium** | Testé OU utilisé ≥ 1 call site, mais pas les deux. |
-| **low** | Sans tests ET sans call site externe (potentiellement abandonné), ou flaggé `@deprecated`. |
+| **high** | Tested (tests present), used in ≥ 3 call sites, stable for several commits. |
+| **medium** | Tested OR used in ≥ 1 call site, but not both. |
+| **low** | No tests AND no external call site (potentially abandoned), or flagged `@deprecated`. |
 
-## Heuristiques pour calcul rapide
+## Heuristics for quick computation
 
-1. Si `usage_count >= 3` et tests existants → **maturité high**.
-2. Si `usage_count == 0` (zero call sites) → **maturité low**, presque toujours.
-3. Si le candidat est dans un `legacy/`, `old/`, `__deprecated__/` → **low** automatique sur tous les axes.
-4. Si la signature contient `**kwargs` ou `Any` partout → **généricité low** (API floue).
+1. If `usage_count >= 3` and tests exist → **maturity high**.
+2. If `usage_count == 0` (zero call sites) → **maturity low**, almost always.
+3. If the candidate is in a `legacy/`, `old/`, `__deprecated__/` → **low** automatically on all axes.
+4. If the signature contains `**kwargs` or `Any` everywhere → **genericity low** (fuzzy API).
 
-## Quand filtrer un candidat (ne pas le proposer du tout)
+## When to filter out a candidate (do not propose it at all)
 
-- Le candidat est marqué `@deprecated` ou son docstring dit "will be removed"
-- Il est dans `migrations/`
-- Il est dans un test (sauf si le scope est explicitement `tests_factories`)
-- Sa signature est strictement plus complexe que ce que le besoin requiert ET il existe une option plus simple
+- The candidate is marked `@deprecated` or its docstring says "will be removed"
+- It is in `migrations/`
+- It is in a test (unless the scope is explicitly `tests_factories`)
+- Its signature is strictly more complex than what the need requires AND a simpler option exists
 
-## Exemples annotés
+## Annotated examples
 
-### Exemple 1
+### Example 1
 
-Need : `validate IBAN format`
+Need: `validate IBAN format`
 
-Candidat : `backend/shared/validators/iban.py:12 — def is_valid_iban(iban: str) -> bool`
+Candidate: `backend/shared/validators/iban.py:12 — def is_valid_iban(iban: str) -> bool`
 
-- Couverture : high (couvre exactement)
-- Généricité : high (stateless, signature simple)
-- Proximité : high (shared validators, l'endroit canonique)
-- Maturité : high (12 call sites, tests présents)
-- **Final : high** ✅
+- Coverage: high (covers exactly)
+- Genericity: high (stateless, simple signature)
+- Proximity: high (shared validators, the canonical place)
+- Maturity: high (12 call sites, tests present)
+- **Final: high** ✅
 
-### Exemple 2
+### Example 2
 
-Need : `render employee picker dropdown`
+Need: `render employee picker dropdown`
 
-Candidat : `frontend/packages/oh-admin/src/components/EmployeeSelect.tsx:18 — export const EmployeeSelect`
+Candidate: `frontend/packages/oh-admin/src/components/EmployeeSelect.tsx:18 — export const EmployeeSelect`
 
-- Couverture : medium (couvre, mais expose toutes les props de Select sous-jacent, propret au call site)
-- Généricité : high (accepte `onChange`, `value`, `companyId`)
-- Proximité : high (même module OH admin)
-- Maturité : medium (2 call sites, pas de test dédié)
-- **Final : medium** 🟡
+- Coverage: medium (covers, but exposes all the props of the underlying Select, leaking to the call site)
+- Genericity: high (accepts `onChange`, `value`, `companyId`)
+- Proximity: high (same OH admin module)
+- Maturity: medium (2 call sites, no dedicated test)
+- **Final: medium** 🟡
 
-### Exemple 3
+### Example 3
 
-Need : `serialize StoppageRead schema`
+Need: `serialize StoppageRead schema`
 
-Candidat : `backend/components/occupational_health/.../legacy/stoppage_schemas.py:42 — class StoppageReadSchema_old`
+Candidate: `backend/components/occupational_health/.../legacy/stoppage_schemas.py:42 — class StoppageReadSchema_old`
 
-- Couverture : medium (la shape ne correspond plus aux nouveaux besoins)
-- Généricité : low (Schema avec post-processing custom)
-- Proximité : high (même component)
-- Maturité : low (legacy, sera removed)
-- **Final : low** 🔴 → en fait : **filtrer** (legacy, ne pas proposer)
+- Coverage: medium (the shape no longer matches the new needs)
+- Genericity: low (Schema with custom post-processing)
+- Proximity: high (same component)
+- Maturity: low (legacy, will be removed)
+- **Final: low** 🔴 → actually: **filter out** (legacy, do not propose)

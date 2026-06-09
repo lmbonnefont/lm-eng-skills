@@ -1,260 +1,303 @@
 ---
 name: lm-oh-amplitude-sync
 description: >
-  Syncs the Occupational Health (OH) analytics events from the alan-apps codebase with
-  the Amplitude dashboard "Prévenir — Dashboard Usage" (ID 8zjhveo3). Detects missing
-  events, creates Amplitude charts grouped by feature, and rewrites the 🆕 New Features
-  section with the Linear tickets from the last 12 weeks.
-  Use when: /lm-oh-amplitude-sync, "sync the OH events in Amplitude", "update the OH
-  dashboard", "which OH events are not in the dashboard", "refresh the New Features
-  section of the Prévenir dashboard", "audit OH events", "which new OH events to track
-  over the last 12 weeks", "sync les events OH dans Amplitude", "mets à jour le dashboard OH".
-  Not for: other teams' dashboards, non-OH events, creating dashboards from scratch.
+  Synchronizes the Occupational Health (OH) analytics events from the alan-apps codebase
+  with the Amplitude dashboard "Prévenir — Dashboard Usage" (ID 8zjhveo3).
+  Detects missing events, creates Amplitude charts grouped by feature,
+  and rewrites the 🆕 New Features section with the Linear tickets from the last 12 weeks.
+  Use when: /lm-oh-amplitude-sync, "sync les events OH dans Amplitude" / "sync OH events into Amplitude",
+  "mets à jour le dashboard OH" / "update the OH dashboard", "quels events OH ne sont pas dans le dashboard" / "which OH events are missing from the dashboard",
+  "refresh la section New Features du dashboard Prévenir" / "refresh the New Features section of the Prévenir dashboard", "audit events OH" / "audit OH events",
+  "quels nouveaux events OH tracker depuis 12 semaines" / "which new OH events to track over the last 12 weeks".
+  Do not use for: other teams' dashboards, non-OH events, creating dashboards from scratch.
 ---
 
 # lm-oh-amplitude-sync
 
-Audite les events analytics OH du codebase, les compare au dashboard Amplitude,
-crée des charts pour les events manquants, et met à jour la section "🆕 New Features".
+Audits the codebase's OH analytics events, compares them to the Amplitude dashboard,
+creates charts for the missing events, and updates the "🆕 New Features" section.
 
-## Constantes
+## Constants
 
-| Paramètre | Valeur |
+| Parameter | Value |
 |---|---|
-| Dashboard Amplitude | `8zjhveo3` (Prévenir — Dashboard Usage) |
-| Project Amplitude | `249047` (Alan) |
-| Rich text "New Features" | item ID `r33ot9r9` |
-| Préfixe events OH | `occupational_health.` |
-| Source of truth events | `frontend/shared/tracking/events.ts` |
-| Dossier composants OH | `frontend/apps/fr-app/js/app/dashboard/occupationalHealth/` |
-| Cutoff "new" | today − 84 jours (12 semaines) |
-| Chart IDs | Fetched dynamiquement depuis le dashboard à chaque run |
+| Amplitude dashboard | `8zjhveo3` (Prévenir — Dashboard Usage) |
+| Amplitude project | `249047` (Alan) |
+| "New Features" row | **Found dynamically**: the row whose rich_text item contains `## 🆕 New Features` (DO NOT hardcode the ID — see below) |
+| OH events prefix | `occupational_health.` |
+| Events source of truth | **The components** `frontend/apps/fr-app/js/app/dashboard/occupationalHealth/` (NOT `events.ts` — see below) |
+| "new" cutoff | today − 84 days (12 weeks) |
+| Chart IDs | Fetched dynamically from the dashboard on each run |
+
+> **⚠️ Two pitfalls learned in prod (do not repeat):**
+>
+> 1. **`events.ts` is NOT the source of truth for OH.** Only a single OH event is typed there; the ~30 others are inline string literals passed as `properties.name` in the components. Grepping `events.ts` misses 30 events out of 31. The real source = the OH components folder. Moreover the event type is not always `button_clicked` (also `banner_viewed`, `form_submitted`) — you must read it in the code, never assume it.
+> 2. **The rich_text IDs are regenerated on EVERY dashboard edit** (observed: `ha3idzlv → fu0axs0o → sipqgzl0 → dyden0j0` across 3 edits). A hardcoded ID can never work. Always relocate the New Features row by its **content** right before editing.
 
 ---
 
-## Phase 1 — Extraire tous les events OH du codebase
+## Phase 1 — Extract all OH events from the codebase
 
-Lire `frontend/shared/tracking/events.ts` et extraire tous les noms d'events avec le préfixe `occupational_health.` :
+OH events are inline string literals passed as `properties.name` in the OH components (not typed in `events.ts`). Scan the **components folder**:
 
 ```bash
-grep -o '"occupational_health\.[^"]*"' frontend/shared/tracking/events.ts | sort -u | tr -d '"'
+cd frontend
+grep -rn '"occupational_health\.' apps/fr-app/js/app/dashboard/occupationalHealth/ \
+  | grep -o '"occupational_health\.[^"]*"' | sort -u | tr -d '"'
 ```
 
-→ Produit la liste `ALL_OH_EVENTS`.
+Safety net (in case an event lives elsewhere): widen to the scoped frontend, excluding svg/emojis:
+
+```bash
+grep -rn '"occupational_health\.' apps/fr-app/js/ packages/ shared/ 2>/dev/null \
+  | grep -o '"occupational_health\.[^"]*"' | sort -u | tr -d '"'
+```
+
+→ Produces the `ALL_OH_EVENTS` list. (In prod the components folder yielded 31 events vs only 1 in `events.ts` — hence this change.)
 
 ---
 
-## Phase 2 — Dater chaque event via git
+## Phase 2 — Date each event via git
 
-Objectif : savoir quand chaque event a été ajouté à `main` (date de merge du commit).
+Goal: know when each event was added to `main` (the commit's merge date).
 
-### 2a. Commits récents touchant events.ts
+Since the events live as inline literals (not in `events.ts`), date each event with `git log -S` (pickaxe) scoped to the OH components folder. A full scan of all events across the entire frontend is slow (monorepo); only date the events to be classified (in practice: the **uncovered** ones, identified in Phase 4 — but you can date everything if needed). Scoping to the OH folder speeds this up a lot.
 
-```bash
-git log main --format="%H %ci %s" -- frontend/shared/tracking/events.ts | head -50
-```
-
-### 2b. Pour chaque commit < 84 jours, trouver les events ajoutés
+### 2a. Date an event (first commit that introduces the literal)
 
 ```bash
-git show --diff-filter=A COMMIT_HASH -- frontend/shared/tracking/events.ts | grep '^+.*"occupational_health\.' | grep -o '"occupational_health\.[^"]*"' | tr -d '"'
+cd frontend
+ohdir="apps/fr-app/js/app/dashboard/occupationalHealth/"
+git log main -S "\"$EVENT\"" --format="%h|%cs|%s" -- "$ohdir" | tail -1
 ```
 
-Si `git show` ne montre pas d'ajout clair (modification de ligne existante), utiliser `git log -S "event_name" --format="%H %ci" -- frontend/shared/tracking/events.ts` pour retrouver le premier commit mentionnant cet event.
+`tail -1` = the oldest commit = the introduction. Compare `%cs` (date) to the cutoff (`today − 84d`). If no commit is found (event outside the OH folder), retry without the `-- "$ohdir"`.
 
-### 2c. Extraire l'ID Linear depuis le commit
+### 2b. Extract the Linear ID from the commit
 
-Chercher dans le message de commit et le body le pattern `OHSET-\d+` :
+Search the commit message and body for the `OHSET-\d+` pattern:
 
 ```bash
 git log -1 --format="%s%n%b" COMMIT_HASH | grep -oE 'OHSET-[0-9]+' | sort -u
 ```
 
-Si absent, vérifier le PR lié (le PR number est parfois dans le sujet `(#12345)`) :
+If absent, check the linked PR (the PR number is sometimes in the subject `(#12345)`):
 
 ```bash
 gh pr view --json title,body,headRefName --jq '{title, body, branch: .headRefName}' -R alan-eu/alan-apps $(git log -1 --format="%s" COMMIT_HASH | grep -oE '#[0-9]+' | tr -d '#')
 ```
 
-Le branch name contient souvent `ohset-\d+` (ex: `lmbonnefont/ohset-524-...`).
+The branch name often contains `ohset-\d+` (e.g. `lmbonnefont/ohset-524-...`).
 
-**Fallback** : si aucun ID OHSET trouvé → utiliser le message du commit brut comme label : `[commit] <sujet du commit>`.
+**Fallback**: if no OHSET ID is found → use the raw commit message as the label: `[commit] <commit subject>`.
 
-→ Produit la map `EVENT_DATES : eventName → {commitHash, mergeDate, linearIds[], label}`.
-
----
-
-## Phase 3 — Récupérer la couverture du dashboard (dynamique)
-
-### 3a. Fetch le dashboard pour avoir la liste actuelle des charts
-
-```
-Call: Skill(mcp__claude_ai_Amplitude__get_dashboard) avec dashboardIds: ["8zjhveo3"]
-```
-
-Extraire `chartIds` de la réponse — cette liste évolue à chaque ajout/suppression de chart, ne jamais la hardcoder.
-
-### 3b. Fetch les définitions de tous les charts courants
-
-```
-Call: Skill(mcp__claude_ai_Amplitude__get_charts) avec les chartIds extraits en 3a
-```
-
-Pour chaque chart, parser sa définition pour extraire les events référencés :
-- Chercher dans les champs `metrics`, `segments`, `filters`, `events` tout string correspondant au pattern `occupational_health.*`
-
-→ Produit `COVERED_EVENTS : Set<eventName>` = events déjà dans au moins un chart.
+→ Produces the map `EVENT_DATES : eventName → {commitHash, mergeDate, linearIds[], label}`.
 
 ---
 
-## Phase 4 — Identifier les gaps
+## Phase 3 — Fetch the dashboard's coverage (dynamic)
+
+### 3a. Fetch the dashboard to get the current list of charts
+
+```
+Call: Skill(mcp__claude_ai_Amplitude__get_dashboard) with dashboardIds: ["8zjhveo3"]
+```
+
+Extract from the response:
+- `chartIds` — this list changes with every add/remove, never hardcode it.
+- `lastModified` — required for any `edit_dashboard` (optimistic concurrency).
+- **The New Features row**: iterate over `rows[]`, find the one whose `items[]` includes a `rich_text` whose `content` contains `## 🆕 New Features`. Keep its **rowIndex** (position in `rows[]`) and the item's `id`. ⚠️ This `id` changes on every edit — re-read it right before each use, never memorize it between two edits.
+
+### 3b. Fetch the definitions of all current charts
+
+```
+Call: Skill(mcp__claude_ai_Amplitude__get_charts) with the chartIds extracted in 3a
+```
+
+For each chart, parse its definition to extract the referenced events:
+- In the `metrics`, `segments`, `filters`, `events` fields, look for any string matching the `occupational_health.*` pattern
+
+→ Produces `COVERED_EVENTS : Set<eventName>` = events already in at least one chart.
+
+---
+
+## Phase 4 — Identify the gaps
 
 ```
 UNCOVERED = ALL_OH_EVENTS − COVERED_EVENTS
-NEW_UNCOVERED = UNCOVERED ∩ {events dont mergeDate > cutoff}
-OLD_UNCOVERED = UNCOVERED ∩ {events dont mergeDate ≤ cutoff}
+NEW_UNCOVERED = UNCOVERED ∩ {events whose mergeDate > cutoff}
+OLD_UNCOVERED = UNCOVERED ∩ {events whose mergeDate ≤ cutoff}
 ```
 
-Si `mergeDate` est inconnue pour un event (commit non trouvé), le classer dans `NEW_UNCOVERED` par prudence.
+If `mergeDate` is unknown for an event (commit not found), classify it in `NEW_UNCOVERED` to be safe.
 
 ---
 
-## Phase 5 — Grouper par feature (semantic grouping)
+## Phase 5 — Group by feature (semantic grouping)
 
-Pour chaque event dans `UNCOVERED` (new ET old), grouper par feature :
+For each event in `UNCOVERED` (new AND old), group by feature:
 
-1. **Grouper par `linearIds`** : events partageant le même ticket vont ensemble
-2. **Regrouper sémantiquement** les tickets liés : si deux tickets couvrent la même fonctionnalité (ex: OHSET-500 = "No-response banner display" + OHSET-521 = "No-response banner CTA clicks"), les fusionner en un seul groupe. Critères de fusion sémantique :
-   - Même composant source (`NoResponseBanner.tsx` → même bannière)
-   - Même domaine fonctionnel dans le nom de l'event (ex: `no_response_banner` commun)
-   - Tickets apparaissant dans la même PR ou branch
-3. **Fallback** (events sans ticket) : groupe `[commit] <message>` individuel
+1. **Group by `linearIds`**: events sharing the same ticket go together
+2. **Semantically regroup** related tickets: if two tickets cover the same functionality (e.g. OHSET-500 = "No-response banner display" + OHSET-521 = "No-response banner CTA clicks"), merge them into a single group. Semantic merge criteria:
+   - Same source component (`NoResponseBanner.tsx` → same banner)
+   - Same functional domain in the event name (e.g. shared `no_response_banner`)
+   - Tickets appearing in the same PR or branch
+3. **Fallback** (events without a ticket): individual `[commit] <message>` group
 
-Pour chaque groupe, récupérer le titre du ticket Linear :
+For each group, fetch the Linear ticket title:
 
 ```
-Call: Skill(mcp__linear__get_issue) avec l'ID du ticket principal du groupe
+Call: Skill(mcp__linear__get_issue) with the ID of the group's main ticket
 ```
 
-→ Produit `FEATURE_GROUPS : [{linearIds, title, events[], isNew, latestMergeDate}]`
+→ Produces `FEATURE_GROUPS : [{linearIds, title, events[], isNew, latestMergeDate}]`
 
 ---
 
-## Phase 5.5 — Gate de confirmation humaine (READ-ONLY jusqu'ici)
+## Phase 5.5 — Human confirmation gate (READ-ONLY up to here)
 
-Avant toute modification du dashboard, présenter un résumé complet de ce qui va être fait et demander confirmation.
+Before any modification to the dashboard, present a complete summary of what will be done and ask for confirmation.
 
-Afficher :
+Display:
 
 ```
-📊 Audit terminé — voici ce qui va être appliqué :
+📊 Audit complete — here is what will be applied:
 
-EVENTS TROUVÉS : N dans le codebase, M déjà couverts par un chart
+EVENTS FOUND: N in the codebase, M already covered by a chart
 
-CHARTS À CRÉER (K au total) :
-  🆕 [OHSET-524] Observation feature  (nouveau, < 12 sem.)
+CHARTS TO CREATE (K total):
+  🆕 [OHSET-524] Observation feature  (new, < 12 wk.)
        events: occupational_health.observation_viewed, occupational_health.observation_submitted
-  🆕 [OHSET-500/521] No-response banner  (nouveau, < 12 sem.)
+  🆕 [OHSET-500/521] No-response banner  (new, < 12 wk.)
        events: occupational_health.no_response_banner_viewed, occupational_health.no_response_banner_cta_clicked
-  ⏳ [OHSET-450] Pending affiliations  (ancien, > 12 sem. — chart créé, pas dans New Features)
+  ⏳ [OHSET-450] Pending affiliations  (old, > 12 wk. — chart created, not in New Features)
        events: occupational_health.affiliation_decision_made
 
-SECTION 🆕 NEW FEATURES (sera réécrite) :
-  Nouveau contenu :
+🆕 NEW FEATURES SECTION (will be rewritten):
+  New content:
   **OHSET-524** — Observation feature · **OHSET-500/521** — No-response banner
 
-Procéder ? (oui / non / modifier)
+Proceed? (yes / no / modify)
 ```
 
-Utiliser `AskUserQuestion` avec les options :
-- **"Oui, appliquer"** → continuer vers Phase 6
-- **"Non, annuler"** → stopper, rien n'est modifié
-- **"Modifier avant d'appliquer"** → demander ce que l'utilisateur veut changer (groupements, noms de charts, events à exclure)
+Use `AskUserQuestion` with the options:
+- **"Yes, apply"** → continue to Phase 6
+- **"No, cancel"** → stop, nothing is modified
+- **"Modify before applying"** → ask what the user wants to change (groupings, chart names, events to exclude)
 
-Si l'utilisateur choisit "Modifier" : ajuster `FEATURE_GROUPS` selon ses instructions, re-présenter le résumé, re-demander confirmation.
+If the user chooses "Modify": adjust `FEATURE_GROUPS` per their instructions, re-present the summary, ask for confirmation again.
 
-Ne jamais passer à la Phase 6 sans confirmation explicite.
+Never proceed to Phase 6 without explicit confirmation.
 
 ---
 
-## Phase 6 — Créer les charts manquants
+## Phase 6 — Create the missing charts
 
-Pour chaque `featureGroup` dans `FEATURE_GROUPS` :
+### 6a. Determine the real event_type of EACH event (mandatory)
 
-1. **Vérifier** s'il n'existe pas déjà un chart avec un nom similaire dans le dashboard (éviter les doublons)
-2. **Créer** un chart Event Segmentation dans le projet `249047` :
-   - Nom : `[OHSET-XXX/YYY] <titre Linear>` (ou `[commit] <message>` si pas de ticket)
-   - Type : Event Segmentation (count d'occurrences dans le temps)
-   - Events : tous les events du groupe en série sur le même chart
-   - Période : 90 jours glissants
+Never assume `button_clicked`. Each event is emitted under a type that depends on the component: `button_clicked`, `banner_viewed`, `form_submitted`… Building the series with the wrong type → the chart silently displays 0 data.
 
-```
-Call: Skill(mcp__claude_ai_Amplitude__verify_chart_definition) pour valider
-Call: Skill(mcp__claude_ai_Amplitude__save_chart_edits) pour créer
+For each event in the group, read the `trackEvent({ name: ... })` in the code and note the `name` field (= the Amplitude event type):
+
+```bash
+cd frontend
+grep -rn -B6 '"occupational_health\.<EVENT_SUFFIX>"' apps/fr-app/js/app/dashboard/occupationalHealth/ \
+  | grep -E 'name:|properties:' | head
 ```
 
-3. **Ajouter le chart au dashboard** `8zjhveo3` via `mcp__claude_ai_Amplitude__edit_dashboard`
-   - Placement : avant le rich_text `r33ot9r9` (section New Features)
-   - Width 12 (pleine largeur) ou 6 si plusieurs charts ajoutés
+The `name:` of the nearby `trackEvent` is the event type. Cases seen in prod: `pending_affiliation_alert` → `banner_viewed`; `professional_email_updated` → `form_submitted` (filtered on `form_name`, not `name`); the rest → `button_clicked` filtered on `name`. A chart can mix several event types (one series per event).
 
-Note : créer des charts pour **tous** les groups (`isNew = true` ET `isNew = false`). Seuls les charts `isNew = true` entrent dans la section New Features (Phase 8).
+### 6b. Create the chart
+
+For each `featureGroup`:
+
+1. **Check** whether a chart with a similar name already exists (avoid duplicates).
+2. **Create** an Event Segmentation chart in project `249047`:
+   - Name: `[OHSET-XXX/YYY] <Linear title>` (or `[commit] <message>` if no ticket)
+   - One series per event, each with its **real event_type** (6a) and the appropriate filter (`name` or `form_name`)
+   - Period: rolling 90 days — `range: "Last 90 Days"`, `metric: "totals"`, `interval: 1`
+
+```
+Call: Skill(mcp__claude_ai_Amplitude__verify_chart_definition) to validate
+Call: Skill(mcp__claude_ai_Amplitude__query_dataset)  → returns a chartEditId
+Call: Skill(mcp__claude_ai_Amplitude__save_chart_edits) with the editIds → permanent chartIds
+```
+
+While at it, look at the data returned by `query_dataset`: a series that is all 0 over 90d is a signal of either zero usage (to flag in Phase 8) or a wrong event_type (re-check 6a).
+
+### 6c. Add the charts to the dashboard
+
+**Placement: BELOW the New Features header**, at the top of the per-feature charts (most recent first). The New Features row is a separator: above = general usage charts, below = one chart per recent feature (this is where the existing charts already live, like qwyzogcn/OHSET-460, c32bd0z6/OHSET-504…). DO NOT place them above the header (error seen in prod: the charts land in the usage zone, not in New Features). Width 6 if several charts per row, otherwise 12.
+
+Two ways to do it:
+- **Simple (recommended) — `set_rows` in a single edit**: rebuild the entire `rows[]` array with the new chart-rows inserted right after the New Features row. A single edit, no problem with `lastModified` or a shifted rowIndex.
+- **Incremental — `insert_row`**: insert at `rowIndex(New Features) + 1`. But then, beware:
+
+⚠️ **`edit_dashboard` returns a STALE `lastModified`** in its compact response (≈ the value sent, not the new one), and each insert shifts the rowIndex. So after EACH `insert_row`: **re-fetch `get_dashboard`** to get the real `lastModified` AND the up-to-date rowIndex of the New Features row (by content, cf. 3a) before the next edit. Never chain two `edit_dashboard` calls without re-fetching in between (otherwise an optimistic-concurrency conflict).
+
+Note: create charts for **all** groups (`isNew = true` AND `isNew = false`). Only the `isNew = true` charts go into the New Features section (Phase 7).
 
 ---
 
-## Phase 7 — Réécrire la section New Features
+## Phase 7 — Rewrite the New Features section
 
-Construire le contenu markdown de la section :
+Build the section's markdown content:
 
 ```markdown
 ## 🆕 New Features
 
-**OHSET-XXX/YYY** — Titre du ticket Linear · **OHSET-ZZZ** — Titre du ticket · **[commit] message** — Event: occupational_health.xxx
+**OHSET-XXX/YYY** — Linear ticket title · **OHSET-ZZZ** — Ticket title · **[commit] message** — Event: occupational_health.xxx
 ```
 
-Règles de construction :
-- Inclure **uniquement** les feature groups avec `isNew = true` (mergeDate > cutoff)
-- Trier par `latestMergeDate` décroissant (le plus récent d'abord)
-- Séparateur entre entrées : ` · ` (espace-point-espace)
-- Si un groupe a plusieurs tickets : `OHSET-500/521` (barre oblique)
-- Si fallback commit : `[commit] <message tronqué à 60 chars>`
+Build rules:
+- Include **only** the feature groups with `isNew = true` (mergeDate > cutoff)
+- Sort by `latestMergeDate` descending (most recent first)
+- Separator between entries: ` · ` (space-dot-space)
+- If a group has several tickets: `OHSET-500/521` (slash)
+- If commit fallback: `[commit] <message truncated to 60 chars>`
 
-Mettre à jour via `mcp__claude_ai_Amplitude__edit_dashboard` en remplaçant le contenu du rich_text `r33ot9r9`.
+Update via `mcp__claude_ai_Amplitude__edit_dashboard`:
+
+1. **Re-fetch `get_dashboard`** (the Phase 6c inserts changed `lastModified` AND the rowIndex of the New Features row). Relocate the row by content `## 🆕 New Features` (cf. 3a).
+2. `edit_dashboard` with `type: "update_row"`, the up-to-date `rowIndex`, the up-to-date `lastModified`, and a `rich_text` item (width 12) containing the new markdown.
+
+Do not reuse a rich_text `id` or a `lastModified` captured before the inserts — they are stale.
 
 ---
 
-## Phase 8 — Afficher le résumé
+## Phase 8 — Display the summary
 
 ```
-✓ N events OH trouvés dans le codebase
-✓ M events déjà couverts par le dashboard
-⚠ K events non couverts :
-    - J nouveaux (< 12 sem.) → charts créés + ajoutés à New Features
-    - L anciens (> 12 sem.) → charts créés, pas dans New Features
+✓ N OH events found in the codebase
+✓ M events already covered by the dashboard
+⚠ K uncovered events:
+    - J new (< 12 wk.) → charts created + added to New Features
+    - L old (> 12 wk.) → charts created, not in New Features
 
-Charts créés :
-  • [OHSET-524] Observation feature — events: [liste]
-  • [OHSET-500/521] No-response banner — events: [liste]
+Charts created:
+  • [OHSET-524] Observation feature — events: [list]
+  • [OHSET-500/521] No-response banner — events: [list]
 
-Section 🆕 New Features mise à jour :
+🆕 New Features section updated:
   → dashboard: https://app.amplitude.com/analytics/alanlytics/dashboard/8zjhveo3
 ```
 
 ---
 
-## Règles de cas particuliers
+## Edge-case rules
 
-| Cas | Comportement |
+| Case | Behavior |
 |---|---|
-| Event sans ID OHSET dans le commit | Label `[commit] <sujet du commit>` — créer quand même le chart |
-| Events > 12 sem. non couverts | Créer le chart dans le dashboard, NE PAS les mettre dans New Features |
-| Plusieurs tickets pour une même feature | Fusionner sémantiquement → un seul chart, label `OHSET-X/Y` |
-| Chart déjà existant avec nom similaire | Skip la création, logger "déjà couvert par chart existant" |
-| Échec `get_issue` Linear | Utiliser l'ID du ticket comme title fallback : `OHSET-XXX` |
+| Event with no OHSET ID in the commit | Label `[commit] <commit subject>` — create the chart anyway |
+| Uncovered events > 12 wk. | Create the chart in the dashboard, do NOT put them in New Features |
+| Several tickets for the same feature | Merge them semantically → a single chart, label `OHSET-X/Y` |
+| Chart with a similar name already exists | Skip creation, log "already covered by an existing chart" |
+| Linear `get_issue` failure | Use the ticket ID as the title fallback: `OHSET-XXX` |
 
 ---
 
-## Vérification post-exécution
+## Post-execution verification
 
-1. `mcp__claude_ai_Amplitude__get_dashboard` avec `8zjhveo3` → vérifier que les nouveaux charts apparaissent dans `chartIds`
-2. Vérifier le contenu du rich_text `r33ot9r9` dans la réponse
-3. Ouvrir le dashboard : https://app.amplitude.com/analytics/alanlytics/dashboard/8zjhveo3
+1. `mcp__claude_ai_Amplitude__get_dashboard` with `8zjhveo3` → check that the new charts appear in `chartIds`
+2. Relocate the New Features row by content (`## 🆕 New Features`) and check that its markdown was indeed rewritten
+3. Open the dashboard: https://app.amplitude.com/analytics/alanlytics/dashboard/8zjhveo3

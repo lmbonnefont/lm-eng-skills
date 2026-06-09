@@ -1,81 +1,84 @@
 ---
 name: lm-draft-github-discussion
 description: >
-  Drafts a GitHub Discussion on alan-eu/Topics in Louis-Marie's voice, after framing the
-  content via /lm-grill-me. Applies Alan's Problem-Solving Method (Scoping / Framing /
-  Making) + the feedback received on 2026-06-01 from Marion Doumeingts on the Work
-  Stoppage discussion: clarity must appear IN THE FIRST 3 LINES (problem / measure /
-  options / decision needed). Adapts length to the type: Quick need = 5-8 lines,
-  Framing = structured long-form, Scoping = 10-15 lines, Making = medium with a
-  product/tech split.
-  Use when: /lm-draft-github-discussion, "create a GH discussion", "draft a framing
-  discussion for [project]", "open a discussion on alan-eu/Topics about X", "scoping
-  discussion for [topic]", "write a Making discussion for [feature]", "GitHub Discussion
-  for [Linear ticket]", "frame [problem] for the team", "draft a problem statement for
-  [topic]", "écris une discussion Making pour [feature]", "discussion pour cadrer [besoin]",
-  "rédige une discussion pour aligner sur [decision]". Also when the user shares a
-  Linear/Slack/Notion URL and says "make it a GH discussion".
-  Not for: Slack messages (use /lm-draft-message), Notion updates (use /lm-draft-message),
-  PR descriptions (use /update-pr-description), commit messages, replies in an existing
-  discussion (just write directly).
+  Drafts a GitHub Discussion on alan-eu/Topics in Louis-Marie's voice, after
+  framing the content via /lm-grill-me. Applies Alan's Problem-Solving Method
+  (Scoping / Framing / Making) + the feedback received on 2026-06-01 from Marion
+  Doumeingts on the Work Stoppage discussion: clarity must appear IN THE FIRST 3
+  LINES (problem / measure / options / decision needed). Adapts the length to the
+  type: Quick need = 5-8 lines, Framing = structured long-form, Scoping = 10-15
+  lines, Making = medium with product/tech split.
+  Use when: /lm-draft-github-discussion, "create a GH discussion", "draft a
+  framing discussion for [project]", "open a discussion on alan-eu/Topics about X",
+  "scoping discussion pour [topic]" / "scoping discussion for [topic]", "écris une
+  discussion Making pour [feature]" / "write a Making discussion for [feature]",
+  "GitHub Discussion sur [Linear ticket]" / "GitHub Discussion on [Linear ticket]",
+  "frame [problem] for the team", "discussion pour cadrer [besoin]" / "discussion to
+  frame [need]", "draft a problem statement for [topic]", "rédige une discussion pour
+  aligner sur [decision]" / "draft a discussion to align on [decision]".
+  Also when the user shares a Linear/Slack/Notion URL and says "fais-en une GH
+  discussion" / "turn it into a GH discussion".
+  Do not use for: Slack messages (use /lm-draft-message), Notion updates
+  (use /lm-draft-message), PR descriptions (use /update-pr-description),
+  commit messages, replies in an existing discussion (just draft directly).
 ---
 
 # lm-draft-github-discussion
 
-Cadre puis rédige une GitHub Discussion qui passe le test de clarté de Marion :
-**dans les 3 premières lignes, le lecteur sait quel problème, comment on mesure,
-quelles options, et quelle décision est demandée**.
+Frame then draft a GitHub Discussion that passes Marion's clarity test:
+**in the first 3 lines, the reader knows which problem, how we measure,
+which options, and which decision is being asked for**.
 
-## Pourquoi ce skill
+## Why this skill
 
-Feedback Marion Doumeingts (2026-06-01) sur
-[Work stoppages - Framing - V0 scope](https://github.com/alan-eu/Topics/discussions/33112) :
+Feedback from Marion Doumeingts (2026-06-01) on
+[Work stoppages - Framing - V0 scope](https://github.com/alan-eu/Topics/discussions/33112):
 
 > "the writing initially felt quite technical, which made it hard for me to quickly
 > understand the options, the trade-offs, and what input you expected from me. The
 > next step is to make that clarity visible earlier in the written framing."
 
-Une discussion sert un de 4 jobs Alan ([Problem-Solving Method](https://www.notion.so/alaninsurance/Problem-Solving-Method-52dab6d4c35b46c185b6990c19bc416d)) :
-Scoping, Framing, Making, Monitoring. Le format s'adapte au job. Un Scoping qui
-adopte le format Framing échoue : trop long, trop tôt.
+A discussion serves one of Alan's 4 jobs ([Problem-Solving Method](https://www.notion.so/alaninsurance/Problem-Solving-Method-52dab6d4c35b46c185b6990c19bc416d)):
+Scoping, Framing, Making, Monitoring. The format adapts to the job. A Scoping that
+adopts the Framing format fails: too long, too early.
 
-Skill séparé de `lm-draft-message` (générique Slack/Notion/GH) car : le grill amont
-est obligatoire ici, les templates par phase sont propres à Alan, et le test de Marion
-est l'unique critère de succès.
+A separate skill from `lm-draft-message` (generic Slack/Notion/GH) because: the upstream
+grill is mandatory here, the per-phase templates are specific to Alan, and Marion's test
+is the sole success criterion.
 
-## Workflow (5 étapes)
+## Workflow (5 steps)
 
-### Étape 1 — Type de discussion
+### Step 1 — Discussion type
 
-Une question `AskUserQuestion`, 5 options :
+One `AskUserQuestion`, 5 options:
 
-| Type | STEP titre | Quand | Longueur |
+| Type | STEP title | When | Length |
 |---|---|---|---|
-| **Scoping** | `Scoping` | Tôt — comprendre le problème, ça vaut le coup ? | 10-15 lignes |
-| **Framing** | `Framing` | Identifier les solutions. Type le plus exigeant, cible du test Marion. | Long-form |
-| **Making** | `Making` | Aligner sur V0 et plan d'exécution. | Medium, structured |
-| **Monitoring** | `Monitoring` | Post-ship — la solution résout-elle le problème ? | Short-medium, data-driven |
-| **Quick need** | *(skip)* | Cadrer un besoin / poser une question ouverte. | 5-8 lignes |
+| **Scoping** | `Scoping` | Early — understand the problem, is it worth it? | 10-15 lines |
+| **Framing** | `Framing` | Identify the solutions. The most demanding type, target of the Marion test. | Long-form |
+| **Making** | `Making` | Align on V0 and execution plan. | Medium, structured |
+| **Monitoring** | `Monitoring` | Post-ship — does the solution solve the problem? | Short-medium, data-driven |
+| **Quick need** | *(skip)* | Frame a need / ask an open question. | 5-8 lines |
 
-STEP dans le titre en **proper-case**, pas all-caps (source : Notion
+STEP in the title in **proper-case**, not all-caps (source: Notion
 [Making decisions on Github](https://www.notion.so/alaninsurance/Making-decisions-on-Github-ec89a8f05c954f4cbdf5ecd3663d2763)).
 
-Si le prompt contient déjà un signal clair ("framing discussion", "V0 scope", "4 semaines
-après le ship") → saute la question, confirme inline en une phrase.
+If the prompt already contains a clear signal ("framing discussion", "V0 scope", "4 weeks
+after ship") → skip the question, confirm inline in one sentence.
 
-### Étape 1.5 — Nature du contenu (product / technical / both)
+### Step 1.5 — Content nature (product / technical / both)
 
-Deuxième question `AskUserQuestion`, sauf signal explicite :
+Second `AskUserQuestion`, unless there is an explicit signal:
 
-| Option | Quand | Effet |
+| Option | When | Effect |
 |---|---|---|
-| **Product** | Décision produit pure. Audience PM/design/ops. | Pas de section technique. |
-| **Technical** | Décision techno pure. Audience eng-only. | Tout inline, pas de toggle. |
-| **Both (mixed)** | Le cas le plus fréquent. | Produit inline, technique dans `<details>` toggles. |
+| **Product** | Pure product decision. PM/design/ops audience. | No technical section. |
+| **Technical** | Pure tech decision. Eng-only audience. | All inline, no toggle. |
+| **Both (mixed)** | The most frequent case. | Product inline, technical in `<details>` toggles. |
 
-**Règle de strates (asymétrique)** : le produit reste top-level (un eng le lit comme
-contexte), le technique va dans des `<details>` toggles (un PM peut l'ignorer sans
-manquer la décision). Jamais l'inverse.
+**Strata rule (asymmetric)**: product stays top-level (an engineer reads it as
+context), technical goes into `<details>` toggles (a PM can ignore it without
+missing the decision). Never the reverse.
 
 ```markdown
 # 💡 Proposal
@@ -90,76 +93,116 @@ manquer la décision). Jamais l'inverse.
 </details>
 ```
 
-Cas particuliers : Pure-product/technical → tout inline. Quick need mixte → produit en
-surface, toggle UNE réf technique si nécessaire. Making mixte → `## Product side` inline
-+ `<details> Technical side </details>` (voir `references/templates.md`).
+Special cases: Pure-product/technical → all inline. Mixed Quick need → product on the
+surface, toggle ONE technical reference if needed. Mixed Making → `## Product side` inline
++ `<details> Technical side </details>` (see `references/templates.md`).
 
-### Étape 2 — Enrich from linked artifacts
+### Step 1.6 — Proposal structure (inline vs threaded)
 
-Si l'input contient des URLs/IDs, probe obligatoire : les décisions vivent dans les
-comments, pas les OPs. Une discussion bâtie sur l'OP seul sera factuellement décalée.
+**Only if the type is Framing (or a large Scoping).** The other types stay
+inline at all times. Ask an `AskUserQuestion`, 2 options:
 
-| Pattern | Commande |
+| Option | When | Effect |
+|---|---|---|
+| **Inline proposal** | A single decision, a single set of options. | `# 💡 Proposal` inline (current behavior: options table, product/technical split). |
+| **Threaded sub-decisions** | ≥2 independent sub-decisions, each with its own frame/data/options. | `# 💡 Proposal` = thread index; each sub-decision = self-contained top-level comment. Model [#33399](https://github.com/alan-eu/Topics/discussions/33399). |
+
+Skip the question + confirm inline in one sentence if the signal is clear: input that already
+contains ≥2 distinct parallel topics → propose threaded; a single decision axis → inline.
+
+**Orthogonality**: threaded ≠ alternative to the product/technical split. Inside a
+thread, product stays top-level and technical goes into a `<details>` toggle (Rule 22).
+The two axes coexist.
+
+If threaded → read `references/thread-architecture.md` before Step 4.
+
+### Thread architecture (model #33399)
+
+When a discussion carries **several independent sub-decisions**, the inline `# 💡 Proposal`
+becomes unreadable: a single comment stream mixes everything. Model #33399 answers
+with a **thread architecture**: the Proposal is only an **index**, each sub-decision
+lives in its own top-level comment, and the discussion accumulates in the relevant thread.
+
+**The central point: progressivity.** The threads are ordered so understanding
+builds from top to bottom: `foundation/broad scope → narrowing → mechanism/options →
+edge cases → artifact (prototype) → Other last`. A reader who reads in order
+accumulates the context; each thread stays readable alone but the sequence tells a story.
+
+Full details (usage criterion, thread skeleton, index format, `gh api` posting
+sequence): `references/thread-architecture.md`.
+
+### Step 2 — Enrich from linked artifacts
+
+If the input contains URLs/IDs, probing is mandatory: decisions live in the
+comments, not the OPs. A discussion built on the OP alone will be factually off.
+
+| Pattern | Command |
 |---|---|
 | `github.com/alan-eu/.../discussions/<N>` | `gh api graphql -f query='query { repository(owner:"alan-eu", name:"<repo>") { discussion(number:<N>) { title body comments(first:50) { nodes { author{login} body createdAt replies(first:20) { nodes { author{login} body createdAt } } } } } } }'` |
-| `github.com/alan-eu/.../pull/<N>` ou `PR #<N>` | `gh pr view <N> --repo alan-eu/<repo> --comments` |
-| `linear.app/...` ou `OHSET-N` / `EP-N` / `PAY-N` / `OHST-N` | `mcp__claude_ai_Linear__get_issue` puis `mcp__claude_ai_Linear__list_comments` |
-| `notion.so/...` ou `app.notion.com/...` | `mcp__claude_ai_Notion__notion-fetch` |
+| `github.com/alan-eu/.../pull/<N>` or `PR #<N>` | `gh pr view <N> --repo alan-eu/<repo> --comments` |
+| `linear.app/...` or `OHSET-N` / `EP-N` / `PAY-N` / `OHST-N` | `mcp__claude_ai_Linear__get_issue` then `mcp__claude_ai_Linear__list_comments` |
+| `notion.so/...` or `app.notion.com/...` | `mcp__claude_ai_Notion__notion-fetch` |
 | `alanhealth.slack.com/archives/...` | `mcp__claude_ai_Slack__slack_read_thread` |
-| `quillmeetings.com/share?id=...` | `mcp__quill__get_meeting` ou `mcp__quill__get_transcript` |
+| `quillmeetings.com/share?id=...` | `mcp__quill__get_meeting` or `mcp__quill__get_transcript` |
 
-Fetch en parallèle. Extraire : timeline des reframings, décisions agréées vs en
-discussion, questions ouvertes, stakeholders déjà prononcés. Si zéro URL → noter "no
-linked artifacts to enrich from" dans l'audit final.
+Fetch in parallel. Extract: timeline of reframings, agreed decisions vs ones still in
+discussion, open questions, stakeholders who already weighed in. If zero URLs → note "no
+linked artifacts to enrich from" in the final audit.
 
-### Étape 3 — Caller `/lm-grill-me`
+### Step 3 — Call `/lm-grill-me`
 
-Invoque `lm-grill-me` en caller mode avec la bank du type :
+Invoke `lm-grill-me` in caller mode with the bank for the type:
 
 ```
-Skill(lm-grill-me) avec args :
+Skill(lm-grill-me) with args:
   --caller lm-draft-github-discussion
   --bank references/grill-bank.md
   --section <scoping|framing|making|quick-need>
 ```
 
-Retourne `{questions_asked, unresolved, decisions_summary}` → alimente le draft (Étape 4).
+Returns `{questions_asked, unresolved, decisions_summary}` → feeds the draft (Step 4).
 
-**Exception** : si l'utilisateur a déjà fourni le contenu détaillé (brouillon, transcript,
-link enrichi avec décisions explicites), confirme en 1 question : "I have enough to draft
-directly, or grill you first to sharpen the framing?". Recommande skip si le contenu passe
-déjà le test des 3 premières lignes.
+**Exception**: if the user has already provided detailed content (draft, transcript,
+link enriched with explicit decisions), confirm with 1 question: "I have enough to draft
+directly, or grill you first to sharpen the framing?". Recommend skipping if the content
+already passes the first-3-lines test.
 
-**Toujours grill pour les Framing** — phase la plus risquée, là où Marion s'applique le plus.
+**Always grill for Framings** — the riskiest phase, where Marion applies the most.
 
-### Étape 4 — Draft selon template
+### Step 4 — Draft per template
 
-Lire `references/templates.md` et appliquer le template du type. Squelette commun aux 4
-types, **6 sections H1 avec emoji** (scannabilité GitHub) :
+Read `references/templates.md` and apply the template for the type. Skeleton common to the 4
+types, **6 H1 sections with emoji** (GitHub scannability):
 
 ```
-# 🔭 Scope                          → ce que c'est + ce que ce n'est PAS
-# 🕐 Why I'm opening this discussion → trigger + lien Linear project
+# 🔭 Scope                          → what it is + what it is NOT
+# 🕐 Why I'm opening this discussion → trigger + Linear project link
 # 📅 Timeline                        → decision by <date>
 # ℹ️ LOCI                            → Lead & Owner / Consulted / Informed
 # 🌐 Context & Materials             → links + bold dependencies + sub-H2
-# 💡 Proposal                        → contenu type-specific
+# 💡 Proposal                        → type-specific content
 ```
 
-Header : **HTML comment Alan** verbatim (copie depuis templates.md, réf docs Notion).
-Fin du body : bloc `### Threads` verbatim avec checkbox cochée (`[X] Please use threads`).
+Header: **Alan HTML comment** verbatim (copy from templates.md, ref Notion docs).
+End of body: `### Threads` block verbatim with the checkbox ticked (`[X] Please use threads`).
 
-**Title format** (Notion guide) : `[<Crew/Area/Community/Unit>] <Subject> - <STEP> - <Title>`
+**If threaded (Step 1.6)**: the `# 💡 Proposal` becomes an **index** (one bullet per thread,
+same emoji as the thread title, `[Thread](TODO: link after posting)` link as placeholder).
+In addition to the OP, draft **N top-level comments**, one per sub-decision, per the skeleton
+in `references/thread-architecture.md`. Order by progressivity (broad → precise → mechanism →
+edge cases → artifact → `Other` last). Force `[X] Please use threads`.
 
-- Area : `[OccHealth Setup]`, `[Occupational Health]`, `[Prévenir]`, etc.
-- Subject : 1 mot si possible, caps réservés aux acronymes.
-- STEP : proper-case, optionnel (Quick need l'omet).
+**Title format** (Notion guide): `[<Crew/Area/Community/Unit>] <Subject> - <STEP> - <Title>`
 
-Ex : `[Occupational Health] Work Stoppages - Framing - Re-open a wrongly-closed stoppage`
+- Area: `[OccHealth Setup]`, `[Occupational Health]`, `[Prévenir]`, etc.
+- Subject: 1 word if possible, caps reserved for acronyms.
+- STEP: proper-case, optional (Quick need omits it).
 
-#### Règle d'or — Marion test mappé sur le template
+E.g.: `[Occupational Health] Work Stoppages - Framing - Re-open a wrongly-closed stoppage`
 
-Si un lecteur s'arrête après `# ℹ️ LOCI` (4 premières sections), il sait déjà :
+#### Golden rule — Marion test mapped onto the template
+
+If a reader stops after `# ℹ️ LOCI` (first 4 sections), they already know:
 
 | Marion test | Section |
 |---|---|
@@ -170,39 +213,39 @@ Si un lecteur s'arrête après `# ℹ️ LOCI` (4 premières sections), il sait 
 | Who decides? | `# ℹ️ LOCI > Lead & Owner` |
 | Whose input? | `# ℹ️ LOCI > Consulted` |
 
-Métrique de progression et reco viennent ensuite (`# 🌐 Context & Materials > ## How
-we'll measure progress`, `# 💡 Proposal`). Le squelette Alan EST le Marion test.
+The progress metric and recommendation come next (`# 🌐 Context & Materials > ## How
+we'll measure progress`, `# 💡 Proposal`). The Alan skeleton IS the Marion test.
 
-#### Conventions de voix
+#### Voice conventions
 
-- **Output 100% anglais, toujours.** Domain terms FR sans équivalent (DSN, SIRET, AMT,
-  IDEST, IPRP, visite de reprise, Cadres/Non-Cadres) restent inline en français.
-- **Pas de tirets cadratins (—)**. Utiliser `:`, `.`, `,`.
-- **Pas de code-switching FR/EN** ("Au top" → "Sounds good").
-- **Acronymes expandés au premier usage** (PR → Pull Request, OH → Occupational Health).
-- **Headings explicites** : `## Problem`, `## Options`, `## Decision I need` — pas `## Context`.
-- **Bullets pour idées same-level**, pas de paragraphes denses pour énumérer (feedback Joachim Lis 2026-04).
-- **`<details>` toggles pour le contenu long** (blank lines obligatoires avant/après le body
-  du toggle, sinon GitHub ne parse pas le markdown). Détail : `references/alan-methodology.md` Rule 21.
-- Emojis avec parcimonie : :rocket:, :tada:, :hand:, :wave:, :hammer_and_wrench:.
+- **Output 100% English, always.** FR domain terms with no equivalent (DSN, SIRET, AMT,
+  IDEST, IPRP, visite de reprise, Cadres/Non-Cadres) stay inline in French.
+- **No em-dashes (—)**. Use `:`, `.`, `,`.
+- **No FR/EN code-switching** ("Au top" → "Sounds good").
+- **Acronyms expanded at first use** (PR → Pull Request, OH → Occupational Health).
+- **Explicit headings**: `## Problem`, `## Options`, `## Decision I need` — not `## Context`.
+- **Bullets for same-level ideas**, not dense paragraphs to enumerate (feedback Joachim Lis 2026-04).
+- **`<details>` toggles for long content** (blank lines mandatory before/after the toggle
+  body, otherwise GitHub doesn't parse the markdown). Detail: `references/alan-methodology.md` Rule 21.
+- Emojis sparingly: :rocket:, :tada:, :hand:, :wave:, :hammer_and_wrench:.
 
-#### Concision (objectif principal de ce skill)
+#### Concision (the main goal of this skill)
 
-- **Phrases pleines, chaque phrase porte une info.** Pas de transition décorative, pas de
-  recap, pas de formule de politesse. Si une phrase peut sauter sans perte d'info, elle saute.
-- **Pas d'effet de style.** Pas de tournure rhétorique ni d'emphase gratuite. Pas d'adverbe
-  (rule 14, alan-methodology.md). Le ton reste celui de LM (direct, conversationnel) mais sans ornement.
-- **Sections optionnelles omises quand vides.** Pour Scoping / Quick need / Monitoring, une
-  section H1 qui n'aurait qu'un placeholder ou du boilerplate est supprimée, pas remplie de vide.
-  **Exception : Framing garde les 6 H1** (le squelette EST le test de Marion).
-- **Préambule minimal.** La réponse mène avec le preview du draft. Pas de "voici le draft que
-  j'ai préparé", pas de méta-commentaire. Les confirmations de type (Étape 1/1.5) restent inline
-  en une phrase.
+- **Full sentences, each sentence carries information.** No decorative transition, no
+  recap, no courtesy formula. If a sentence can be dropped without information loss, it goes.
+- **No stylistic flourish.** No rhetorical turns of phrase or gratuitous emphasis. No adverbs
+  (rule 14, alan-methodology.md). The tone stays LM's (direct, conversational) but without ornament.
+- **Optional sections omitted when empty.** For Scoping / Quick need / Monitoring, an H1
+  section that would carry only a placeholder or boilerplate is removed, not filled with emptiness.
+  **Exception: Framing keeps the 6 H1s** (the skeleton IS the Marion test).
+- **Minimal preamble.** The response leads with the draft preview. No "here's the draft I
+  prepared", no meta-commentary. The type confirmations (Step 1/1.5) stay inline
+  in one sentence.
 
-### Étape 5 — Pass 2 : Audit de clarté visible
+### Step 5 — Pass 2: Visible clarity audit
 
-Output **toujours** cette checklist après le draft (ancre les patterns par répétition,
-objectif growth C1→D sur "audience-aware writing") :
+**Always** output this checklist after the draft (anchors the patterns by repetition,
+growth objective C1→D on "audience-aware writing"):
 
 ```markdown
 ## Clarity audit (Marion test + Alan template compliance)
@@ -211,7 +254,7 @@ Alan template compliance:
 - [x] HTML comment Alan in header (verbatim)
 - [x] Title format: `[<Area>] <Subject> - <STEP> - <Title>`
 - [x] All 6 H1 sections present (Scope, Why, Timeline, LOCI, Context & Materials, Proposal)
-- [x] Emoji prefixes on H1s (🔭, 🕐, 📅, ℹ️, 🌐, 💡) — Unicode literal, not Slack notation
+- [x] Emoji prefixes on H1s (🔭, 🕐, 📅, ℹ️, 🌐, 💡): Unicode literal, not Slack notation
 - [x] LOCI complete: Lead & Owner + Consulted + Informed all populated
 
 Marion test (clarity in first 4 sections):
@@ -222,14 +265,22 @@ Marion test (clarity in first 4 sections):
 - [x] Progress metric visible in `# 🌐 Context & Materials > ## How we'll measure progress` (Framing only)
 - [x] Options laid out with trade-offs table (Framing only)
 - [x] Recommendation stated with rationale (Framing/Making)
-- [x] Existing experience referenced (Framing/Making — Marion 2026-06-01)
+- [x] Existing experience referenced (Framing/Making, Marion 2026-06-01)
 - [x] Product vs Technical split (Making only, if cross-discipline audience)
 
 Product/Technical strata (Rule 22, asymmetric):
-- [x] Audience asked at Étape 1.5 (product / technical / both)
+- [x] Audience asked at Step 1.5 (product / technical / both)
 - [x] If "both": product inline + technical in `<details>` toggle
 - [x] No inversion: product is never wrapped while technical stays inline
 - [x] If pure-product or pure-technical: no toggle, all inline
+
+Thread architecture (if threaded — Step 1.6):
+- [x] `# 💡 Proposal` is a thread index (one bullet per thread, emoji matches thread title)
+- [x] Progressivity respected: foundation → narrowing → mechanism → edge cases → artifact → Other last
+- [x] Each thread is self-contained (legal/data anchor + options/open question, readable alone)
+- [x] Each thread closes with an open question inviting discussion
+- [x] Index covers every drafted thread; `Other` thread present and last
+- [x] `### Threads` set to `[X] Please use threads`
 
 Voice & conventions:
 - [x] No em-dashes
@@ -254,30 +305,30 @@ Voice & conventions:
 - <unresolved items from grill, with the right person to ping for each>
 ```
 
-## Quand JTBD aide (Framing surtout)
+## When JTBD helps (Framing especially)
 
-Pour formuler **Problem** et **Progress metric** en Framing (détails
-`references/jtbd-cheatsheet.md`) :
+To phrase the **Problem** and **Progress metric** in a Framing (details
+`references/jtbd-cheatsheet.md`):
 
-- **Job statement** (`Verb + Object + Contextual modifier`), solution-neutre. Ex : "Help OH
+- **Job statement** (`Verb + Object + Contextual modifier`), solution-neutral. E.g.: "Help OH
   admins **declare a work stoppage** for an employee **without leaving the dashboard**".
-- **Outcome statement** (`Direction + Unit of measure + Object`). Ex : "Minimize the number
+- **Outcome statement** (`Direction + Unit of measure + Object`). E.g.: "Minimize the number
   of clicks to declare a single work stoppage".
 
-Skip JTBD pour Scoping et Quick need — trop lourd.
+Skip JTBD for Scoping and Quick need — too heavy.
 
-## Output final attendu
+## Expected final output
 
-Trois blocs de draft + audit + open questions. GitHub Discussions parse le markdown brut,
-pas le rendu : sans le code block, copier le rendu du chat casse listes/tables/emojis.
+Three draft blocks + audit + open questions. GitHub Discussions parses the raw markdown,
+not the rendering: without the code block, copying the chat rendering breaks lists/tables/emojis.
 
-### 1. Preview (rendu lisible dans le chat)
+### 1. Preview (readable rendering in the chat)
 
-Le draft en markdown normal, rendu par le terminal, pour relecture confortable avant copy-paste.
+The draft in normal markdown, rendered by the terminal, for comfortable proofreading before copy-paste.
 
 ### 2. Raw markdown for GitHub (copy-paste block)
 
-Ré-émettre le même draft dans une seule fence ` ```markdown ` :
+Re-emit the same draft in a single ` ```markdown ` fence:
 
 ````
 ```markdown
@@ -308,39 +359,56 @@ Ré-émettre le même draft dans une seule fence ` ```markdown ` :
 ```
 ````
 
-Règles du raw block :
-- Une seule fence ` ```markdown ` englobe tout.
-- HTML comment Alan en tête, verbatim.
-- Titre avec `# ` (le champ Title GitHub prend juste le texte — voir Section 3).
-- Emojis Unicode literal dans les H1 (`🔭`, `🕐`, `📅`, `ℹ️`, `🌐`, `💡`), pas notation Slack
-  `:telescope:` (GitHub ne la convertit pas).
-- Aucun commentaire ni "voici le draft :" autour du contenu.
+Raw block rules:
+- A single ` ```markdown ` fence wraps everything.
+- Alan HTML comment at the top, verbatim.
+- Title with `# ` (the GitHub Title field takes just the text — see Section 3).
+- Unicode literal emojis in the H1s (`🔭`, `🕐`, `📅`, `ℹ️`, `🌐`, `💡`), not Slack notation
+  `:telescope:` (GitHub doesn't convert it).
+- No comment, no "here's the draft:" around the content.
 
-### 3. Posting instructions GitHub
+### 3. GitHub posting instructions
 
-- **Repository** : `alan-eu/Topics`
-- **Category** : "Discussions" (default). Alan a abandonné les catégories granulaires : le
-  STEP vit dans le titre, le scope vit dans les labels.
-- **Labels** : au moins un de la liste canonique (🇧🇪 Belgium, ✨ Corporate and People,
+- **Repository**: `alan-eu/Topics`
+- **Category**: "Discussions" (default). Alan dropped granular categories: the
+  STEP lives in the title, the scope lives in the labels.
+- **Labels**: at least one from the canonical list (🇧🇪 Belgium, ✨ Corporate and People,
   💼 Customer, 🧱 Foundation, 🇫🇷 France, 🌍 International Expansion, 🧑 Member, 🇪🇸 Spain,
-  🛤️ Transversal, 🇨🇦 Canada). OH de LM → 🇫🇷 France (+ 🧑 Member si member-facing).
-- **Title field** : la ligne `# ...` du code block, sans le `#` initial.
-- **Body field** : tout le reste (HTML comment + 6 H1 + bloc `### Threads`).
-- **No double-ping** : ne pas annoncer sur Slack, les notifications GitHub couvrent les LOCI.
+  🛤️ Transversal, 🇨🇦 Canada). LM's OH → 🇫🇷 France (+ 🧑 Member if member-facing).
+- **Title field**: the `# ...` line of the code block, without the leading `#`.
+- **Body field**: everything else (HTML comment + 6 H1 + `### Threads` block).
+- **No double-ping**: don't announce on Slack, GitHub notifications cover the LOCI.
 
 ### 4. Clarity audit + Open questions
 
-Comme défini à l'Étape 5, APRÈS le raw markdown block pour ne pas polluer la copie.
+As defined in Step 5, AFTER the raw markdown block so the copy stays clean.
 
-### Ne pas publier automatiquement
+### Threaded variant (if Step 1.6 = threaded)
 
-LM relit, ajuste, publie lui-même via l'UI GitHub (ou `gh api graphql` s'il le demande
-explicitement). Le skill produit le draft, pas le publish.
+Output, in order:
 
-## Tips meta (si pertinent)
+1. **OP preview** (readable rendering) — the `# 💡 Proposal` is the index, `[Thread](…)` links as
+   placeholders.
+2. **Raw OP markdown** (a single ` ```markdown ` fence) with the index as placeholder
+   `[Thread](TODO: link after posting)`.
+3. **N raw markdown blocks, one per thread**, in progressivity order. Each block = a single
+   ` ```markdown ` fence, titled `Thread 1 — 💼 <subject>`, etc. Skeleton from
+   `references/thread-architecture.md`.
+4. **Posting sequence**: post OP → post each thread (capture the `comment.url`) →
+   backfill the OP index → update OP. The `gh api graphql` recipe is in
+   `references/thread-architecture.md` (only run it if LM asks).
+5. **Clarity audit + Open questions**.
 
-- **Scoping/Framing depuis page blanche** : suggérer "Have you paired with [stakeholder]
-  before drafting? Marion's tip 2026-06-01 : 1-2h async exploration → 30min pair → use the
-  transcript to draft." Ne pas insister si LM dit avoir déjà du contexte.
-- **Making fait d'un coup** : suggérer de splitter product vs technical en 2 sections (son
-  framework du 2026-06-01, validé par Marion comme "good but keep it flexible").
+### Do not publish automatically
+
+LM proofreads, adjusts, and publishes himself via the GitHub UI (or `gh api graphql` if he
+asks explicitly). The skill produces the draft, not the publish. For the threaded variant, the
+backfill of the `#discussioncomment-<id>` anchors requires the posting: only run it on explicit request.
+
+## Meta tips (if relevant)
+
+- **Scoping/Framing from a blank page**: suggest "Have you paired with [stakeholder]
+  before drafting? Marion's tip 2026-06-01: 1-2h async exploration → 30min pair → use the
+  transcript to draft." Don't insist if LM says he already has context.
+- **Making done in one go**: suggest splitting product vs technical into 2 sections (his
+  framework from 2026-06-01, validated by Marion as "good but keep it flexible").

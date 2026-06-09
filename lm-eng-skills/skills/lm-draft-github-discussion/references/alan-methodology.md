@@ -239,7 +239,7 @@ LM preference, 2026-06-01:
 > "Ne pas envoyer d'informations techniques à des gens qui font du produit.
 > L'inverse est faux car le produit sert de contexte au technique."
 
-**Applied by skill**: Étape 1.5 of the workflow asks the user whether the
+**Applied by skill**: Step 1.5 of the workflow asks the user whether the
 discussion is *product*, *technical*, or *both*. When *both*, the draft
 enforces:
 

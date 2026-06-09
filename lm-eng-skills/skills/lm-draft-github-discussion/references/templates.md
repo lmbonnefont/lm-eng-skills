@@ -316,6 +316,17 @@ once it crosses ~6 bullets or 10 lines.>
 4. **Outcome statement in Context & Materials** — it's the measurable success
    criterion. Don't bury it.
 
+### Threaded variant (multiple sub-decisions)
+
+When a Framing carries **≥2 independent sub-decisions** (each with its own legal basis,
+data, or option set), don't cram them into one inline Proposal. Switch to the **thread
+architecture**: `# 💡 Proposal` becomes a thin index, and each sub-decision lives in its own
+top-level comment, ordered for progressivity (foundation → narrowing → mechanism → edge cases
+→ artifact → `Other` last). Canonical example:
+[#33399](https://github.com/alan-eu/Topics/discussions/33399). Full pattern, thread skeleton,
+and posting sequence: `thread-architecture.md`. The inline template above stays the default
+for single-decision Framings.
+
 ### Example title
 
 `[OccHealth Setup] Work Stoppages - Framing - Re-open a wrongly-closed stoppage`

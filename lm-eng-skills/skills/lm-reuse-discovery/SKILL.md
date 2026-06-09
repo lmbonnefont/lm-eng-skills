@@ -1,63 +1,64 @@
 ---
 name: lm-reuse-discovery
 description: >
-  Actively hunts for functions, hooks, components, types, factories, and utils that
-  already exist in the repo and could cover the needs of a feature being designed —
-  to avoid duplicating what is already written. Breaks the specs into atomic feature
-  needs, runs a parallel search across 4 scopes (backend Python, frontend TS,
-  types/schemas, tests/factories), scores candidates (high/medium/low), and returns
-  structured JSON + a summary grouped by need with `file:line` links.
-  Use when: `/lm-reuse-discovery`, "what can we reuse for X", "is there already a
-  function that does Y", "find existing helpers for Z", "anti-duplication check on this
-  feature", "find reusable code for [feature]", "before I build X what already exists",
-  "qu'est-ce qu'on peut réutiliser pour X", "y a-t-il déjà une fonction qui fait Y",
-  "trouve les helpers existants pour Z". Also callable in **caller mode** from
-  `lm-guided-feature-development` Part 2 (Reuse Discovery step, between flow walkthrough
-  and architecture proposal).
-  Not for: E2E flow tracing (use `/lm-flow-walkthrough`), architecture overview (use
-  `/xray`), external library documentation (use `/explore-lib`).
+  Actively hunts for the functions, hooks, components, types, factories, and
+  utils that already exist in the repo and can cover the needs of a feature
+  currently being designed — to avoid duplicating what is already written.
+  Breaks specs down into atomic feature needs, runs a parallel search across
+  4 scopes (backend Python, frontend TS, types/schemas, tests/factories), scores
+  the candidates (high/medium/low), returns structured JSON + a summary grouped
+  by need with `file:line` links. Use when: `/lm-reuse-discovery`,
+  "qu'est-ce qu'on peut réutiliser pour X" / "what can we reuse for X",
+  "y a-t-il déjà une fonction qui fait Y" / "is there already a function that does Y",
+  "trouve les helpers existants pour Z" / "find the existing helpers for Z",
+  "anti-duplication check sur cette feature" / "anti-duplication check on this feature",
+  "find reusable code for [feature]", "before I build X what already exists".
+  Also callable in **caller mode** from `lm-guided-feature-development`
+  Part 2 (Reuse Discovery step, between flow walkthrough and architecture proposal).
+  Do not use for: tracing an E2E flow (use `/lm-flow-walkthrough`),
+  architecture overview (use `/xray`), external library documentation
+  (use `/explore-lib`).
 ---
 
 # Reuse Discovery
 
-Identifie le code existant qui peut couvrir les besoins d'une feature en cours
-de design. Objectif : empêcher la duplication systémique (helpers, hooks,
-factories, types) en cherchant **activement** avant de proposer une architecture.
+Identifies existing code that can cover the needs of a feature currently being
+designed. Goal: prevent systemic duplication (helpers, hooks, factories, types)
+by searching **actively** before proposing an architecture.
 
-**Règle fondamentale** : zero trust. Chaque candidat proposé doit pointer une
-ligne réelle (fichier:ligne) qu'on a lue. Ne jamais inventer un nom de fonction
-ni inférer son existence depuis le naming d'un fichier voisin.
+**Fundamental rule**: zero trust. Every proposed candidate must point to a real
+line (file:line) that has been read. Never invent a function name nor infer its
+existence from the naming of a neighboring file.
 
-## Modes d'invocation
+## Invocation modes
 
-| Mode | Déclencheur | Comportement |
+| Mode | Trigger | Behavior |
 |---|---|---|
-| **Standalone** | `/lm-reuse-discovery <input>` | Interactif, gate de validation après extraction des needs |
-| **Caller** | Subagent depuis `lm-guided-feature-development` Part 2 | Non-interactif, retourne JSON + résumé, pas de gate |
+| **Standalone** | `/lm-reuse-discovery <input>` | Interactive, validation gate after extracting the needs |
+| **Caller** | Subagent from `lm-guided-feature-development` Part 2 | Non-interactive, returns JSON + summary, no gate |
 
-En caller mode, le prompt doit contenir `"caller mode"` pour désactiver les gates.
+In caller mode, the prompt must contain `"caller mode"` to disable the gates.
 
-## Step 0 — Résolution de l'input
+## Step 0 — Input resolution
 
-Input possibles :
+Possible inputs:
 
-| Type | Exemple | Stratégie |
+| Type | Example | Strategy |
 |---|---|---|
-| Ticket Linear | `OHSET-456` | Lire `.claude/plans/feature-checkpoint-OHSET-456.md` Part 1, sinon fetch Linear |
-| Specs libres | "endpoint qui liste les arrêts de travail filtrés par date" | Utiliser le texte tel quel |
-| Caller mode | Subagent depuis Part 2 | Lire les specs déjà extraites du checkpoint Part 1 |
+| Linear ticket | `OHSET-456` | Read `.claude/plans/feature-checkpoint-OHSET-456.md` Part 1, otherwise fetch Linear |
+| Free-form specs | "endpoint that lists work stoppages filtered by date" | Use the text as-is |
+| Caller mode | Subagent from Part 2 | Read the specs already extracted from the Part 1 checkpoint |
 
-Si specs introuvables ou ambiguës en standalone : `AskUserQuestion` "Donne-moi
-les specs (ou le ticket Linear) à analyser". En caller mode, retourner une
-erreur structurée `{"error": "no_specs_in_checkpoint"}` plutôt que poser une
-question.
+If specs are missing or ambiguous in standalone: `AskUserQuestion` "Give me the
+specs (or the Linear ticket) to analyze". In caller mode, return a structured
+error `{"error": "no_specs_in_checkpoint"}` rather than asking a question.
 
-## Step 1 — Décomposition en feature needs
+## Step 1 — Breaking down into feature needs
 
-Depuis les specs, extraire **5–12 besoins atomiques** (capacités). Un besoin =
-une capacité unitaire qu'on doit avoir pour livrer la feature.
+From the specs, extract **5–12 atomic needs** (capabilities). A need = a unit
+capability that we must have to ship the feature.
 
-**Forme** : verbe + objet domaine, court. Exemples :
+**Form**: verb + domain object, short. Examples:
 - `fetch employment by member_id`
 - `validate IBAN format`
 - `render employee picker dropdown`
@@ -65,77 +66,77 @@ une capacité unitaire qu'on doit avoir pour livrer la feature.
 - `serialize StoppageRead schema`
 - `upload file to S3 with presigned URL`
 
-**Anti-patterns** :
-- Trop large : "gérer les arrêts de travail" → décomposer
-- Trop concret : "ajouter colonne `is_validated` BOOLEAN" → c'est de l'archi, pas un besoin
-- Lié à l'implémentation : "écrire un middleware Flask" → reformuler en besoin
+**Anti-patterns**:
+- Too broad: "manage work stoppages" → break it down
+- Too concrete: "add `is_validated` BOOLEAN column" → that's architecture, not a need
+- Implementation-bound: "write a Flask middleware" → rephrase as a need
 
-En **standalone**, présenter la liste à l'utilisateur via `AskUserQuestion` avec
-options : "Liste OK", "Ajoute / retire des besoins" (laisser saisir). En
-**caller mode**, skip la validation.
+In **standalone**, present the list to the user via `AskUserQuestion` with
+options: "List OK", "Add / remove needs" (let them type). In **caller mode**,
+skip the validation.
 
-## Step 2 — Recherche parallèle par scope
+## Step 2 — Parallel search by scope
 
-Lancer **4 sous-agents `Explore` en parallèle** (un seul message, 4 appels). Chaque
-sous-agent reçoit la liste complète de feature needs et un scope précis.
+Launch **4 `Explore` subagents in parallel** (single message, 4 calls). Each
+subagent receives the full list of feature needs and a specific scope.
 
-Voir `references/search-strategies.md` pour les patterns grep exacts par scope.
+See `references/search-strategies.md` for the exact grep patterns per scope.
 
-### Prompt commun à chaque sous-agent
+### Common prompt for each subagent
 
 ```
-Tu reçois une liste de "feature needs" (capacités atomiques) pour une feature
-en cours de design. Ta mission : pour chaque need, identifier les fonctions /
-hooks / composants / types / factories existants dans ton scope qui peuvent
-couvrir ce besoin.
+You receive a list of "feature needs" (atomic capabilities) for a feature
+currently being designed. Your mission: for each need, identify the existing
+functions / hooks / components / types / factories within your scope that can
+cover that need.
 
-Scope assigné : {scope_name}
-Patterns de recherche : voir `references/search-strategies.md` section {scope_name}
+Assigned scope: {scope_name}
+Search patterns: see `references/search-strategies.md` section {scope_name}
 
-Feature needs :
-{liste numérotée}
+Feature needs:
+{numbered list}
 
-Pour chaque need, retourner 0 à 5 candidats. Format JSON par candidat :
+For each need, return 0 to 5 candidates. JSON format per candidate:
 {
-  "need": "<need string copié verbatim>",
-  "file": "<chemin relatif au repo>",
-  "line": <ligne du symbol>,
-  "signature": "<signature lue, pas inférée>",
-  "evidence": "<1 ligne : pourquoi ça couvre le need>",
-  "usage_count": <nombre approximatif d'appelants via grep, ou null>
+  "need": "<need string copied verbatim>",
+  "file": "<path relative to the repo>",
+  "line": <line of the symbol>,
+  "signature": "<signature as read, not inferred>",
+  "evidence": "<1 line: why it covers the need>",
+  "usage_count": <approximate number of callers via grep, or null>
 }
 
-Zero trust : lis chaque candidat avant de le retourner. Pas de candidat
-inféré du nom de fichier seul. Si tu ne trouves rien pour un need, retourne
-[] pour ce need (ne pas inventer).
+Zero trust: read every candidate before returning it. No candidate inferred
+from the file name alone. If you find nothing for a need, return [] for that
+need (do not invent).
 ```
 
-### Les 4 scopes
+### The 4 scopes
 
-| Scope | Chemins | Cible |
+| Scope | Paths | Target |
 |---|---|---|
-| `backend_python` | `backend/components/**`, `backend/shared/**` | BL functions, queries, controllers helpers, utils |
-| `frontend_ts` | `frontend/packages/**`, `frontend/shared/**`, `frontend/apps/**` (sauf `apps/cli`) | hooks, composants React, utils TS |
-| `types_schemas` | dataclasses Python, Marshmallow Schemas, types TS partagés, enums | Modèles de données réutilisables |
-| `tests_factories` | `**/tests/factories.py`, `**/__factories__/*`, `**/fixtures/*` | Factories existantes, fixtures, helpers de tests |
+| `backend_python` | `backend/components/**`, `backend/shared/**` | BL functions, queries, controller helpers, utils |
+| `frontend_ts` | `frontend/packages/**`, `frontend/shared/**`, `frontend/apps/**` (except `apps/cli`) | hooks, React components, TS utils |
+| `types_schemas` | Python dataclasses, Marshmallow Schemas, shared TS types, enums | Reusable data models |
+| `tests_factories` | `**/tests/factories.py`, `**/__factories__/*`, `**/fixtures/*` | Existing factories, fixtures, test helpers |
 
 ## Step 3 — Score & dedupe
 
-Voir `references/scoring-rubric.md` pour la rubrique complète.
+See `references/scoring-rubric.md` for the full rubric.
 
-**Score = high / medium / low** sur 4 axes :
-1. **Couverture** : exacte (= high), partielle nécessitant wrapper (medium), tangentielle (low)
-2. **Généricité** : réutilisable as-is (high), à étendre via paramètre (medium), à forker (low)
-3. **Proximité domaine** : même component (high), autre component même bounded context (medium), shared généraliste (medium si OK pour ce besoin)
-4. **Maturité** : testé + multi-call-sites (high), un seul call site (medium), récent / non testé (low)
+**Score = high / medium / low** across 4 axes:
+1. **Coverage**: exact (= high), partial requiring a wrapper (medium), tangential (low)
+2. **Genericity**: reusable as-is (high), to extend via a parameter (medium), to fork (low)
+3. **Domain proximity**: same component (high), another component in the same bounded context (medium), generic shared (medium if OK for this need)
+4. **Maturity**: tested + multi-call-sites (high), single call site (medium), recent / untested (low)
 
-Score final = min des 4 axes (le maillon faible décide).
+Final score = min of the 4 axes (the weakest link decides).
 
-**Dedupe** : si plusieurs sous-agents retournent le même `file:line`, garder une seule entrée et mentionner les scopes qui ont matché.
+**Dedupe**: if several subagents return the same `file:line`, keep a single entry and mention the scopes that matched.
 
 ## Step 4 — Output
 
-### Output JSON (toujours retourné, structure stable pour caller mode)
+### JSON output (always returned, stable structure for caller mode)
 
 ```json
 {
@@ -169,55 +170,55 @@ Score final = min des 4 axes (le maillon faible décide).
 }
 ```
 
-### Output textuel (humain)
+### Text output (human)
 
-Format markdown, groupé par need, candidats triés `high → medium → low`. Filtrer
-les `low` par défaut (mentionner "X low candidates hidden — `--show-low` pour
-voir"). Chaque candidat sur 2 lignes :
+Markdown format, grouped by need, candidates sorted `high → medium → low`. Filter
+out `low` by default (mention "X low candidates hidden — `--show-low` to see
+them"). Each candidate on 2 lines:
 
 ```
 **fetch employment by member_id**
 - 🟢 `backend/components/.../queries/employments.py:42` — `get_employment_for_member(member_id)`
-  Couvre exactement, 8 call sites, use as-is.
+  Covers exactly, 8 call sites, use as-is.
 - 🟡 `backend/components/.../queries/members.py:118` — `get_member_with_employment(member_id)`
-  Charge aussi le member ; medium car ramène plus de data que nécessaire.
+  Also loads the member; medium because it brings back more data than needed.
 ```
 
-### Gate utilisateur (standalone uniquement)
+### User gate (standalone only)
 
-`AskUserQuestion` après affichage :
-- "Tout réutiliser comme proposé"
-- "Exclure certains candidats" (laisser saisir)
-- "Approfondir un candidat" (déclenche un Read du fichier)
+`AskUserQuestion` after the display:
+- "Reuse everything as proposed"
+- "Exclude some candidates" (let them type)
+- "Dig into a candidate" (triggers a Read of the file)
 
-En caller mode : pas de gate, retourner JSON + résumé au parent skill.
+In caller mode: no gate, return JSON + summary to the parent skill.
 
-## Output en caller mode
+## Output in caller mode
 
-Le subagent appelant attend exactement :
+The calling subagent expects exactly:
 
 ```
-{JSON ci-dessus}
+{JSON above}
 
 ---HUMAN_SUMMARY---
 
-{markdown ci-dessus}
+{markdown above}
 ```
 
-Le parent skill (`lm-guided-feature-development` Part 2 Step 2bis) merge le
-JSON dans `reuse_discovery` du bundle Part 2, et utilise le markdown pour
-l'affichage à l'utilisateur lors de la gate "Architecture Proposal".
+The parent skill (`lm-guided-feature-development` Part 2 Step 2bis) merges the
+JSON into the `reuse_discovery` of the Part 2 bundle, and uses the markdown for
+displaying to the user at the "Architecture Proposal" gate.
 
-## Anti-patterns à éviter
+## Anti-patterns to avoid
 
-- **Inventer des candidats** : si grep ne trouve rien, retourner `[]` — jamais générer un nom plausible.
-- **Sur-décomposer les needs** : 15+ needs = perte de focus. Viser 5–12.
-- **Promouvoir des low candidates** : si le maillon faible est low, garder low — ne pas arrondir au-dessus.
-- **Skipper la lecture** : chaque candidat doit avoir une signature lue, pas inférée du nom.
-- **Ignorer le domaine** : un `format_date` shared n'est pas un bon candidat pour un besoin "format date d'arrêt maladie en FR" si l'OH component a déjà son propre formatter local.
+- **Inventing candidates**: if grep finds nothing, return `[]` — never generate a plausible name.
+- **Over-decomposing the needs**: 15+ needs = loss of focus. Aim for 5–12.
+- **Promoting low candidates**: if the weakest link is low, keep it low — do not round up.
+- **Skipping the read**: every candidate must have a signature that was read, not inferred from the name.
+- **Ignoring the domain**: a shared `format_date` is not a good candidate for a "format sick-leave date in FR" need if the OH component already has its own local formatter.
 
-## Ressources
+## Resources
 
-- `references/search-strategies.md` — patterns grep par scope, raccourcis Glob
-- `references/scoring-rubric.md` — rubrique de scoring détaillée + exemples
+- `references/search-strategies.md` — grep patterns per scope, Glob shortcuts
+- `references/scoring-rubric.md` — detailed scoring rubric + examples
 - `evals/evals.json` — test cases

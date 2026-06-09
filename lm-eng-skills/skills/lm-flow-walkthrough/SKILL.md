@@ -1,282 +1,282 @@
 ---
 name: lm-flow-walkthrough
 description: >
-  Trace and explain end-to-end code flows with annotated call chains and narrative
-  explanations. Every claim is proven by a file:line reference.
-  Use when: /lm-flow-walkthrough, "trace the flow of X", "how does X work",
-  "walk me through X", "explain the flow from endpoint Y to the DB",
-  "what happens when Z", "how does X work in the codebase",
-  "trace le flow de X", "comment fonctionne X", "explique le flow de l'endpoint Y jusqu'à la DB",
-  "qu'est-ce qui se passe quand Z".
+  Trace and explain code flows end-to-end with annotated call chains and narrative
+  explanations. Every claim is backed by a file:line reference.
+  Use when: /lm-flow-walkthrough, "trace le flow de X" / "trace the flow of X",
+  "comment fonctionne X" / "how does X work", "walk me through X",
+  "explique le flow de l'endpoint Y jusqu'à la DB" / "explain the flow from endpoint Y down to the DB",
+  "qu'est-ce qui se passe quand Z" / "what happens when Z", "how does X work in the codebase".
   Also callable in caller mode from other skills (e.g. lm-guided-feature-development Part 2).
-  Not for: static architecture overviews (use /xray), library documentation (use /explore-lib).
+  Do not use for: static architecture overviews (use /xray),
+  library documentation (use /explore-lib).
 ---
 
 # Flow Walkthrough
 
-Trace un flow de code de bout en bout et produit deux outputs :
-- **Section A** : Call chain annotée avec `fichier:ligne` cliquable à chaque hop
-- **Section B** : Explication narrative style "Evidence trace" — chaque claim prouvée par une référence
+Trace a code flow end-to-end and produce two outputs:
+- **Section A**: Annotated call chain with clickable `file:line` at each hop
+- **Section B**: "Evidence trace" style narrative explanation — every claim backed by a reference
 
-**Règle fondamentale** : ne jamais présenter une hypothèse comme un fait. Si un hop n'est pas vérifiable (dispatch dynamique, code untyped), le flagguer comme `[GAP]` avec les candidats possibles.
+**Core rule**: never present a hypothesis as a fact. If a hop is not verifiable (dynamic dispatch, untyped code), flag it as `[GAP]` with the possible candidates.
 
-## Modes d'invocation
+## Invocation modes
 
-| Mode | Déclencheur | Comportement |
+| Mode | Trigger | Behavior |
 |---|---|---|
-| **Standalone** | `/lm-flow-walkthrough <input>` | Interactif, gate de confirmation à la fin |
-| **Caller** | Invoqué depuis un autre skill (subagent) | Non-interactif, retourne JSON structuré + output lisible |
+| **Standalone** | `/lm-flow-walkthrough <input>` | Interactive, confirmation gate at the end |
+| **Caller** | Invoked from another skill (subagent) | Non-interactive, returns structured JSON + readable output |
 
-En mode caller, le prompt du subagent doit contenir `"caller mode"` pour désactiver les gates interactives.
+In caller mode, the subagent prompt must contain `"caller mode"` to disable the interactive gates.
 
 ---
 
-## Step 0 — Résolution de l'input
+## Step 0 — Input resolution
 
-`$ARGUMENTS` est l'un de ces trois types. Détecter et normaliser :
+`$ARGUMENTS` is one of these three types. Detect and normalize:
 
-| Pattern d'input | Type | Exemple | Stratégie |
+| Input pattern | Type | Example | Strategy |
 |---|---|---|---|
-| Méthode HTTP + path, ou URL path | endpoint | `POST /api/v1/proposals`, `/proposals` | Grep route decorators |
-| fichier.py:nom_fonction ou fichier:ligne | file-function | `contracting/public/proposal.py:approve_proposal` | Read direct du fichier |
-| Texte libre décrivant un concept | concept | "renewal tacit approval", "comment l'enrollment marche" | Grep termes-clés, identifier entry points |
+| HTTP method + path, or URL path | endpoint | `POST /api/v1/proposals`, `/proposals` | Grep route decorators |
+| file.py:function_name or file:line | file-function | `contracting/public/proposal.py:approve_proposal` | Read the file directly |
+| Free text describing a concept | concept | "renewal tacit approval", "how enrollment works" | Grep key terms, identify entry points |
 
-Si ambigu (plusieurs candidats), utiliser `AskUserQuestion` :
-"J'ai trouvé plusieurs points d'entrée possibles. Lequel tracer ?" avec chaque candidat comme option (`fichier:ligne — description`).
+If ambiguous (multiple candidates), use `AskUserQuestion`:
+"I found several possible entry points. Which one should I trace?" with each candidate as an option (`file:line — description`).
 
 ---
 
-## Step 1 — Localisation du point d'entrée
+## Step 1 — Entry point localization
 
-### Pour un endpoint
+### For an endpoint
 
-1. Grep le path dans les route decorators :
-   - `backend/apps/*/` et `backend/components/**/controllers/` pour `@blueprint.route`, `@*.get`, `@*.post`, etc.
-   - `frontend/modules/global-api/src/` pour les hooks API côté client
-2. Si trouvé des deux côtés (backend + frontend), présenter les deux et demander quelle direction tracer
-3. Si plusieurs matches (même path dans FR et BE apps), présenter les options via `AskUserQuestion`
+1. Grep the path in the route decorators:
+   - `backend/apps/*/` and `backend/components/**/controllers/` for `@blueprint.route`, `@*.get`, `@*.post`, etc.
+   - `frontend/modules/global-api/src/` for the client-side API hooks
+2. If found on both sides (backend + frontend), present both and ask which direction to trace
+3. If multiple matches (same path in FR and BE apps), present the options via `AskUserQuestion`
 
-### Pour un fichier:fonction
+### For a file:function
 
-1. Read le fichier, localiser la fonction
-2. Déterminer la couche depuis le path :
-   - `public/` → API publique cross-component
-   - `internal/controllers/` → controller HTTP
-   - `internal/business_logic/` → logique métier
+1. Read the file, locate the function
+2. Determine the layer from the path:
+   - `public/` → cross-component public API
+   - `internal/controllers/` → HTTP controller
+   - `internal/business_logic/` → business logic
    - `internal/models/` → ORM / DB
    - `external/` → anti-corruption layer
-   - `frontend/modules/*/src/screens/` → écran frontend
-3. Proposer la direction de trace via `AskUserQuestion` : DOWN (callees), UP (callers), ou BOTH
+   - `frontend/modules/*/src/screens/` → frontend screen
+3. Propose the trace direction via `AskUserQuestion`: DOWN (callees), UP (callers), or BOTH
 
-### Pour un concept
+### For a concept
 
-1. Grep les termes-clés dans `backend/` et `frontend/`
-2. Ranking par pertinence de couche : `public/` > `controllers/` > `business_logic/` > `models/` > reste
-3. Filtrer les tests, migrations, `__pycache__`
-4. Présenter les top 5 candidats avec `fichier:ligne` et contexte 1 ligne
-5. L'utilisateur confirme le point d'entrée via `AskUserQuestion`
+1. Grep the key terms in `backend/` and `frontend/`
+2. Rank by layer relevance: `public/` > `controllers/` > `business_logic/` > `models/` > the rest
+3. Filter out tests, migrations, `__pycache__`
+4. Present the top 5 candidates with `file:line` and 1-line context
+5. The user confirms the entry point via `AskUserQuestion`
 
 ---
 
-## Step 2 — Trace du call chain
+## Step 2 — Call chain trace
 
-À partir du point d'entrée résolu, tracer le flow hop par hop.
+Starting from the resolved entry point, trace the flow hop by hop.
 
-### Procédure de trace
+### Trace procedure
 
-1. **Read** la fonction courante
-2. **Identifier** tous les appels sortants (appels de fonction, imports)
-3. Pour chaque appel : **résoudre** vers `fichier:ligne` via Grep + Read
-4. **Enregistrer** : caller `fichier:ligne` → callee `fichier:ligne`, avec un résumé 1 ligne
-5. Si résolution impossible : **flagguer** `[GAP: raison]` avec les candidats possibles
-6. **Paralléliser** les Grep quand possible (chercher callers et callees simultanément)
+1. **Read** the current function
+2. **Identify** all outgoing calls (function calls, imports)
+3. For each call: **resolve** to `file:line` via Grep + Read
+4. **Record**: caller `file:line` → callee `file:line`, with a 1-line summary
+5. If resolution is impossible: **flag** `[GAP: reason]` with the possible candidates
+6. **Parallelize** the Greps when possible (search for callers and callees simultaneously)
 
-### Patterns de trace backend (architecture alan-apps)
+### Backend trace patterns (alan-apps architecture)
 
-Le backend suit une architecture en couches. La trace typique descend ainsi :
+The backend follows a layered architecture. The typical trace descends as follows:
 
 ```
-apps/{country}_api/config/components_config.py  (enregistrement blueprint)
-  → components/{name}/bootstrap/bootstrap.py  (bootstrap du composant)
-    → components/{name}/internal/controllers/*.py  (handler HTTP, @use_args)
+apps/{country}_api/config/components_config.py  (blueprint registration)
+  → components/{name}/bootstrap/bootstrap.py  (component bootstrap)
+    → components/{name}/internal/controllers/*.py  (HTTP handler, @use_args)
       → components/{name}/internal/business_logic/actions/*.py  (mutations)
-         ou /queries/*.py  (lectures → retournent des dataclasses)
+         or /queries/*.py  (reads → return dataclasses)
         → components/{name}/internal/models/*.py  (SQLAlchemy ORM)
-        → components/{name}/external/*.py  (appels services externes)
-        → shared/*  (helpers cross-cutting)
-      → components/{name}/public/*.py  (API publique si cross-component)
+        → components/{name}/external/*.py  (external service calls)
+        → shared/*  (cross-cutting helpers)
+      → components/{name}/public/*.py  (public API if cross-component)
 ```
 
-**Conventions à connaître pour tracer correctement** :
-- Les controllers importent la BL **inline** (dans le corps de la fonction), jamais en haut du fichier — chercher les imports dans le body, pas en tête
-- La BL accepte des IDs, pas des objets ORM — utilise `get_or_raise_missing_resource()`
-- Les queries retournent des **dataclasses**, pas des entités ORM
-- `@use_args` avec Marshmallow schemas pour le parsing de requêtes
-- Logique country-specific dans `app_specifics/{country}/` — **toujours flagguer comme GAP** car résolu au runtime
-- Système de plugins : dispatch runtime via `get_plugin()` — **toujours flagguer comme GAP**
-- Event subscribers (signaux Flask) — vérifier `bootstrap.py` pour les listeners enregistrés
+**Conventions to know in order to trace correctly**:
+- Controllers import the BL **inline** (in the function body), never at the top of the file — look for imports in the body, not in the header
+- The BL accepts IDs, not ORM objects — uses `get_or_raise_missing_resource()`
+- Queries return **dataclasses**, not ORM entities
+- `@use_args` with Marshmallow schemas for request parsing
+- Country-specific logic in `app_specifics/{country}/` — **always flag as GAP** because it is resolved at runtime
+- Plugin system: runtime dispatch via `get_plugin()` — **always flag as GAP**
+- Event subscribers (Flask signals) — check `bootstrap.py` for the registered listeners
 
-### Patterns de trace frontend
+### Frontend trace patterns
 
 ```
-frontend/apps/{app}/routes.tsx  (définition de route)
-  → frontend/modules/{module}/src/screens/*.tsx  (composant écran)
-    → frontend/modules/{module}/src/components/*.tsx  (composants UI)
-    → frontend/modules/global-api/src/*.ts  (hooks API : useQuery/useMutation)
-      → endpoint backend  (lien vers trace backend)
+frontend/apps/{app}/routes.tsx  (route definition)
+  → frontend/modules/{module}/src/screens/*.tsx  (screen component)
+    → frontend/modules/{module}/src/components/*.tsx  (UI components)
+    → frontend/modules/global-api/src/*.ts  (API hooks: useQuery/useMutation)
+      → backend endpoint  (link to backend trace)
 ```
 
 ### Cross-stack (frontend → backend)
 
-Si le flow traverse le frontend et le backend, tracer les deux en séquence :
-1. Frontend jusqu'au hook API (`useQuery`/`useMutation` dans `global-api/`)
-2. Marquer la frontière HTTP clairement : `--- HTTP boundary: GET /api/... ---`
-3. Backend depuis le controller correspondant jusqu'à la DB/service externe
+If the flow spans the frontend and the backend, trace both in sequence:
+1. Frontend down to the API hook (`useQuery`/`useMutation` in `global-api/`)
+2. Mark the HTTP boundary clearly: `--- HTTP boundary: GET /api/... ---`
+3. Backend from the corresponding controller down to the DB/external service
 
-### End-to-end flows (output visible par l'utilisateur)
+### End-to-end flows (user-visible output)
 
-Pour les changements qui affectent ce que l'utilisateur voit/reçoit (filename téléchargé, contenu email, texte affiché), tracer le **pipeline complet** du trigger utilisateur jusqu'au point de sortie final. Le point de sortie (ex: header `Content-Disposition` du download) est souvent distinct du point de production (ex: upload S3). Toujours identifier les deux.
+For changes that affect what the user sees/receives (downloaded filename, email content, displayed text), trace the **full pipeline** from the user trigger to the final exit point. The exit point (e.g. the download's `Content-Disposition` header) is often distinct from the production point (e.g. S3 upload). Always identify both.
 
-### Table de mapping path → domain
+### path → domain mapping table
 
 | Path Pattern | Domain | Backend App | Frontend App |
 |---|---|---|---|
-| `apps/fr_api/` ou `components/fr/` | France | `fr_api` | `fr-server` |
-| `apps/be_api/` ou `components/be/` | Belgium | `be_api` | `be-server` |
-| `apps/es_api/` ou `components/es/` | Spain | `es_api` | `es-server` |
-| `apps/ca_api/` ou `components/ca/` | Canada | `ca_api` | `ca-server` |
-| `apps/eu_tools/` | Internal Tools | `eu_tools` | `eng-tools-server` ou `eu-home-server` |
+| `apps/fr_api/` or `components/fr/` | France | `fr_api` | `fr-server` |
+| `apps/be_api/` or `components/be/` | Belgium | `be_api` | `be-server` |
+| `apps/es_api/` or `components/es/` | Spain | `es_api` | `es-server` |
+| `apps/ca_api/` or `components/ca/` | Canada | `ca_api` | `ca-server` |
+| `apps/eu_tools/` | Internal Tools | `eu_tools` | `eng-tools-server` or `eu-home-server` |
 
-### Limites
+### Limits
 
-- **Profondeur max** : 8 hops. Au-delà, flagguer et demander si l'utilisateur veut continuer.
-- **Nœuds terminaux** : DB query (SQLAlchemy), appel HTTP externe, render React. Arrêter la trace à ces points.
+- **Max depth**: 8 hops. Beyond that, flag it and ask whether the user wants to continue.
+- **Terminal nodes**: DB query (SQLAlchemy), external HTTP call, React render. Stop the trace at these points.
 
 ---
 
-## Step 3 — Production de l'output
+## Step 3 — Output production
 
-L'output est structuré en **3 sections**, toujours dans cet ordre. Les 3 sections utilisent systématiquement le format `` `path/to/file:LINE` `` pour chaque référence — pas d'exception.
+The output is structured into **3 sections**, always in this order. All 3 sections consistently use the `` `path/to/file:LINE` `` format for every reference — no exceptions.
 
-### Section A : Narratif high-level
+### Section A: High-level narrative
 
-Le but est de donner une **vision d'ensemble** du flow en langage simple, comme si on l'expliquait à un collègue qui découvre la feature. Chaque grande étape est une phrase avec un lien cliquable vers le fichier principal de cette étape. On ne rentre pas dans le détail des fonctions ici — on décrit le parcours et les grandes règles métier.
+The goal is to give an **overall picture** of the flow in plain language, as if explaining it to a colleague discovering the feature. Each major step is a sentence with a clickable link to the main file for that step. We don't go into function-level detail here — we describe the journey and the main business rules.
 
-**Format** :
+**Format**:
 
 ```
-## Comment fonctionne [description] — Vue d'ensemble
+## How [description] works — Overview
 
-Quand [trigger utilisateur], voici ce qui se passe :
+When [user trigger], here is what happens:
 
-1. **[Nom de l'étape]** — Le frontend affiche [quoi] via le composant `ComponentName`
+1. **[Step name]** — The frontend displays [what] via the `ComponentName` component
    → `frontend/modules/.../screens/VisitScreen.tsx:42`
 
-2. **[Nom de l'étape]** — L'utilisateur [action], ce qui appelle l'API `[METHOD /path]`
+2. **[Step name]** — The user [action], which calls the `[METHOD /path]` API
    → `frontend/modules/global-api/src/visits/useNextVisit.ts:18`
 
    --- HTTP boundary: GET /api/visits/next-deadline ---
 
-3. **[Nom de l'étape]** — Le backend reçoit la requête et délègue à la business logic
+3. **[Step name]** — The backend receives the request and delegates to the business logic
    → `backend/components/.../controllers/visit.py:67`
 
-4. **[Nom de l'étape]** — La BL applique [règle métier principale : ex "calcule la prochaine deadline selon le type de visite et les contraintes réglementaires"]
+4. **[Step name]** — The BL applies [main business rule: e.g. "computes the next deadline based on the visit type and regulatory constraints"]
    → `backend/components/.../queries/next_visit_deadline.py:34`
 
-5. **[Nom de l'étape]** — [Règle métier secondaire ou étape de données]
+5. **[Step name]** — [Secondary business rule or data step]
    → `backend/components/.../models/visit.py:89`
 
-### Règles métier clés
-- **[Règle 1]** : [description simple, ex: "une visite d'embauche doit avoir lieu dans les 3 mois suivant la date d'entrée"] → `fichier:ligne`
-- **[Règle 2]** : [description] → `fichier:ligne`
-- [GAP] [Règle incertaine] : [hypothèse à vérifier] — non prouvée dans le code
+### Key business rules
+- **[Rule 1]**: [simple description, e.g. "an onboarding visit must take place within 3 months of the start date"] → `file:line`
+- **[Rule 2]**: [description] → `file:line`
+- [GAP] [Uncertain rule]: [hypothesis to verify] — not proven in the code
 ```
 
-**Principes du narratif** :
-- Écrire comme si on racontait une histoire : "quand X fait Y, le système Z"
-- Chaque étape = **une phrase**, pas une liste de fonctions
-- Nommer les **règles métier**, pas les détails techniques ("calcule la deadline" > "appelle `compute_deadline()`")
-- Toujours un lien cliquable vers le fichier **principal** de l'étape
-- Les règles métier clés sont listées séparément à la fin — ce sont les invariants du système
+**Narrative principles**:
+- Write as if telling a story: "when X does Y, the system Z"
+- Each step = **one sentence**, not a list of functions
+- Name the **business rules**, not the technical details ("computes the deadline" > "calls `compute_deadline()`")
+- Always a clickable link to the **main** file for the step
+- The key business rules are listed separately at the end — these are the system's invariants
 
-### Section B : Deep dive par fonction
+### Section B: Per-function deep dive
 
-Après le narratif, on plonge dans **chaque fonction traversée**, dans l'ordre du call chain. Pour chaque fonction, on explique :
-- Ce qu'elle fait (1-2 phrases)
-- Les règles métier qu'elle encode (avec liens cliquables vers les lignes exactes)
-- Les inputs/outputs importants
-- Les edge cases ou branches conditionnelles notables
+After the narrative, we dive into **each function traversed**, in call chain order. For each function, we explain:
+- What it does (1-2 sentences)
+- The business rules it encodes (with clickable links to the exact lines)
+- The important inputs/outputs
+- The notable edge cases or conditional branches
 
-**Format** :
+**Format**:
 
 ```
 ## Deep dive
 
 ### 1. `ComponentName` — `frontend/modules/.../screens/VisitScreen.tsx:42`
 
-Affiche la page de suivi des visites médicales. Récupère les données via le hook
-`useNextVisitDeadline()` (`frontend/modules/global-api/src/.../useNextVisit.ts:18`).
+Displays the medical visit tracking page. Fetches the data via the
+`useNextVisitDeadline()` hook (`frontend/modules/global-api/src/.../useNextVisit.ts:18`).
 
-**Règles** :
-- Affiche un badge d'alerte si la deadline est < 30 jours → `:67`
-- Masque la section si le membre n'a pas de suivi OH actif → `:52`
+**Rules**:
+- Displays an alert badge if the deadline is < 30 days → `:67`
+- Hides the section if the member has no active OH follow-up → `:52`
 
 ---
 
 ### 2. `GET /api/visits/next-deadline` — `backend/components/.../controllers/visit.py:67`
 
-Controller HTTP. Reçoit `member_id` en query param (`@use_args` avec `VisitDeadlineQuerySchema` → `:64`).
-Délègue à `get_next_visit_deadline()` via import inline → `:79`.
+HTTP controller. Receives `member_id` as a query param (`@use_args` with `VisitDeadlineQuerySchema` → `:64`).
+Delegates to `get_next_visit_deadline()` via inline import → `:79`.
 
 ---
 
 ### 3. `get_next_visit_deadline()` — `backend/components/.../queries/next_visit_deadline.py:34`
 
-Calcule la prochaine deadline de visite médicale pour un membre donné.
+Computes the next medical visit deadline for a given member.
 
-**Règles** :
-- Visite d'embauche : deadline = date_entree + 3 mois → `:56`
-- Visite périodique : deadline = dernière_visite + intervalle (dépend du poste) → `:78`
-- Suivi renforcé : intervalle réduit à 12 mois → `:92`
-- [GAP] Le calcul d'intervalle pour les travailleurs de nuit passe par `get_plugin()` → résolution runtime
+**Rules**:
+- Onboarding visit: deadline = start_date + 3 months → `:56`
+- Periodic visit: deadline = last_visit + interval (depends on the role) → `:78`
+- Enhanced follow-up: interval reduced to 12 months → `:92`
+- [GAP] The interval computation for night workers goes through `get_plugin()` → runtime resolution
 
-**Inputs** : `member_id: int`, `account_id: int`
-**Output** : `NextVisitDeadlineEntity` (dataclass) → `:23`
+**Inputs**: `member_id: int`, `account_id: int`
+**Output**: `NextVisitDeadlineEntity` (dataclass) → `:23`
 
 ---
 
 ### 4. `Visit` model — `backend/components/.../models/visit.py:89`
 
-Modèle SQLAlchemy. Query avec `selectinload` sur `visit_type` et `member` → `:102`.
-Table PostgreSQL : `occupational_health_visit`.
+SQLAlchemy model. Query with `selectinload` on `visit_type` and `member` → `:102`.
+PostgreSQL table: `occupational_health_visit`.
 ```
 
-**Principes du deep dive** :
-- Chaque fonction = un bloc avec son propre heading `### N. nom — fichier:ligne`
-- Les **règles métier** sont en gras et chacune a un lien vers la ligne exacte
-- Si une fonction n'a pas de règle métier notable (pur plumbing), le dire en une ligne et passer au suivant
-- Les inputs/outputs ne sont mentionnés que quand ils sont utiles pour comprendre les connexions
-- Les edge cases et branches conditionnelles sont listés comme règles
+**Deep dive principles**:
+- Each function = a block with its own heading `### N. name — file:line`
+- The **business rules** are in bold and each one has a link to the exact line
+- If a function has no notable business rule (pure plumbing), say so in one line and move on
+- Inputs/outputs are mentioned only when they are useful for understanding the connections
+- Edge cases and conditional branches are listed as rules
 
-### Section C : Gaps et assumptions
+### Section C: Gaps and assumptions
 
-Regrouper tous les gaps et assumptions à la fin pour une vue consolidée :
+Group all gaps and assumptions at the end for a consolidated view:
 
 ```
 ## Gaps & Assumptions
 
-### Gaps (non vérifiés dans le code)
-- **[GAP 1]** à l'étape N : [raison] — candidats possibles : `fichier:ligne`, `fichier:ligne`
-- **[GAP 2]** à l'étape N : [raison]
+### Gaps (not verified in the code)
+- **[GAP 1]** at step N: [reason] — possible candidates: `file:line`, `file:line`
+- **[GAP 2]** at step N: [reason]
 
-### Assumptions (non prouvées)
-- L'utilisateur est authentifié (decorator `@requires_auth` à `fichier:ligne` le suggère)
-- La config existe en base (pas de guard clause trouvée à `fichier:ligne` — potentiel bug ?)
+### Assumptions (not proven)
+- The user is authenticated (the `@requires_auth` decorator at `file:line` suggests so)
+- The config exists in the database (no guard clause found at `file:line` — potential bug?)
 ```
 
-### Mode caller : JSON structuré additionnel
+### Caller mode: additional structured JSON
 
-En mode caller, retourner **en plus** des 3 sections lisibles un bloc JSON :
+In caller mode, return — **in addition** to the 3 readable sections — a JSON block:
 
 ```json
 {
@@ -286,13 +286,13 @@ En mode caller, retourner **en plus** des 3 sections lisibles un bloc JSON :
     "type": "endpoint"
   },
   "narrative": {
-    "summary": "Quand X fait Y, le système Z...",
+    "summary": "When X does Y, the system Z...",
     "steps": [
-      { "name": "Affichage écran visite", "description": "Le frontend affiche...", "main_file": "path:line" },
-      { "name": "Appel API", "description": "L'utilisateur clique...", "main_file": "path:line" }
+      { "name": "Visit screen display", "description": "The frontend displays...", "main_file": "path:line" },
+      { "name": "API call", "description": "The user clicks...", "main_file": "path:line" }
     ],
     "business_rules": [
-      { "rule": "Visite d'embauche dans les 3 mois", "file": "path/to/file.py", "line": 56 }
+      { "rule": "Onboarding visit within 3 months", "file": "path/to/file.py", "line": 56 }
     ]
   },
   "call_chain": [
@@ -302,8 +302,8 @@ En mode caller, retourner **en plus** des 3 sections lisibles un bloc JSON :
       "file": "path/to/file.py",
       "line": 42,
       "function": "function_name",
-      "summary": "description 1 ligne",
-      "rules": ["règle métier encodée ici"]
+      "summary": "1-line description",
+      "rules": ["business rule encoded here"]
     }
   ],
   "gaps": [
@@ -314,7 +314,7 @@ En mode caller, retourner **en plus** des 3 sections lisibles un bloc JSON :
     }
   ],
   "relevant_files": [
-    { "path": "...", "line": 67, "reason": "controller principal" }
+    { "path": "...", "line": 67, "reason": "main controller" }
   ],
   "patterns_observed": ["inline imports in controllers", "dataclass return from queries"],
   "potential_issues": ["no null guard on campaign config lookup"],
@@ -332,20 +332,20 @@ En mode caller, retourner **en plus** des 3 sections lisibles un bloc JSON :
 }
 ```
 
-Les champs `relevant_files`, `patterns_observed`, `potential_issues`, `all_usages`, `e2e_flows` sont directement consommables par `lm-guided-feature-development` Step 3 (Architecture Proposal).
+The `relevant_files`, `patterns_observed`, `potential_issues`, `all_usages`, `e2e_flows` fields are directly consumable by `lm-guided-feature-development` Step 3 (Architecture Proposal).
 
 ---
 
-## Step 4 — Gate de confirmation
+## Step 4 — Confirmation gate
 
-### Mode standalone
+### Standalone mode
 
-Utiliser `AskUserQuestion` avec :
-- "Je comprends le flow, merci" → fin du skill
-- "Trace plus profond dans l'étape [X]" → re-enter Step 2 au nœud spécifié
-- "Explique l'étape [X] plus en détail" → lire le fichier concerné et expliquer
-- "Montre-moi le contenu du fichier [Y]" → Read et présenter
+Use `AskUserQuestion` with:
+- "I understand the flow, thanks" → end the skill
+- "Trace deeper into step [X]" → re-enter Step 2 at the specified node
+- "Explain step [X] in more detail" → read the relevant file and explain
+- "Show me the contents of file [Y]" → Read and present
 
-### Mode caller
+### Caller mode
 
-Skip cette étape — le skill appelant gère l'interaction utilisateur.
+Skip this step — the calling skill handles the user interaction.
