@@ -1,14 +1,15 @@
 # Product Questions Bank
 
-Question bank organized by feature type. To be enriched over time.
+Question bank organized by feature type. **Product/UX only** — these are asked during Part 1 grilling.
+Implementation/technical decisions (data model, API shape, persistence mechanism, auth mechanism, pagination strategy, encryption, sync/async, idempotence) are NOT here — they are decided in Part 2 (Technical Plan).
 
 ## Form
 
 - Optional vs. required fields?
-- Client-side validation, server-side, or both?
+- What validation rules, and when does the user see the error (on input vs. on submission)?
 - Error state handling (message, field highlight, submission blocking)?
 - Ability to save a draft? Behavior on abandonment?
-- Expected field formats (phone, email, postal code)? Validation on input or on submission?
+- Expected field formats the user must follow (phone, email, postal code)?
 
 ## List / Table
 
@@ -21,7 +22,7 @@ Question bank organized by feature type. To be enriched over time.
 ## Multi-Step Flow (Wizard)
 
 - Can the user go back? Validated progression or free navigation?
-- State saved on abandonment? Where (session, localStorage, backend)?
+- Is progress preserved if the user leaves and comes back?
 - Optional steps or all required?
 - Final summary before confirmation?
 - Behavior after success (redirect, modal, message)?
@@ -48,26 +49,23 @@ Question bank organized by feature type. To be enriched over time.
 
 ## Data State
 
-- Automatic refresh (polling, WebSocket, refetch on focus)?
-- Offline behavior (cache, retry, message)?
-- Optimistic updates or wait for server response?
+- Do the data update live for the user (and how fresh must they be)?
+- Offline behavior the user sees (cached view, retry, message)?
+- Should the UI reflect a change instantly or only after server confirmation?
 
 ## Sensitive / Medical Data
 
-- On-the-fly encryption? Partial masking (e.g., HIPAA)?
-- Audit trail, access logs?
-- GDPR / right to be forgotten?
+- Should sensitive data be partially masked in the UI (e.g., only last digits shown)?
+- Any user-facing consent / GDPR flow (right to be forgotten, data export)?
+- Who is allowed to view this data, and what does a non-authorized user see?
 
 ## API Endpoint (Backend-only)
 
-- Request/response format (JSON, CSV, streaming)?
-- Authentication required (token, session, API key)? Authorized roles?
-- Pagination (offset, cursor)? Default and maximum limit?
-- Rate limiting? Per-user/organization quotas?
-- Synchronous or asynchronous processing (task queue, webhook callback)?
-- Idempotence required (retry-safe)?
-- Error handling (HTTP codes, error format, localized messages)?
+- What business capability does this endpoint enable?
+- Who/what consumes it, and what do they need back to do their job?
+- Which outcomes and error cases matter to the consumer?
+- Who is authorized to use it, and what happens when they are not?
 
 ---
 
-**Note**: This file is updated after each feature with newly discovered questions.
+**Note**: Product/UX questions only. This file is updated after each feature with newly discovered product questions. Technical questions belong to Part 2, not here.

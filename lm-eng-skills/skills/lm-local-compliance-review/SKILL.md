@@ -132,26 +132,26 @@ After all 3 agents return, merge their findings:
 ## Step 5: Output
 
 ```
-## Revue de conformité locale
+## Local Compliance Review
 
-### P1 — Must fix (le reviewer va flag)
-[numbered findings or "Aucun"]
+### P1 — Must fix (the reviewer will flag this)
+[numbered findings or "None"]
 
-### P2 — Should fix (incohérent avec les voisins)
-[numbered findings or "Aucun"]
+### P2 — Should fix (inconsistent with neighboring files)
+[numbered findings or "None"]
 
-### P3 — Consider (opportunité d'apprentissage)
-[numbered findings or "Aucun"]
+### P3 — Consider (learning opportunity)
+[numbered findings or "None"]
 
 ---
-**Approfondir ?** Tape un numéro pour voir plus d'exemples du bon pattern dans le repo,
-"fix all" pour appliquer les corrections, ou "continue" pour passer à la suite.
+**Dig deeper?** Type a number to see more examples of the correct pattern in the repo,
+"fix all" to apply the corrections, or "continue" to move on.
 ```
 
 If all 3 agents returned "No issues found":
 
 ```
-Aucun problème de conformité. Ton code est cohérent avec le contexte local.
+No compliance issues. Your code is consistent with the local context.
 ```
 
 Do NOT pad with flattery. Silence is approval.

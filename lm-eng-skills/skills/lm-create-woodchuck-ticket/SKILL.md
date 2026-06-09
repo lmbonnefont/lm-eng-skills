@@ -169,9 +169,9 @@ Propose a short, action-oriented title (≤70 chars). Format: `[area emoji or co
 
 Present the title + full description. Tailor the question to the mode:
 
-- **Create mode**: "Voilà le draft. Je crée l'issue dans la team **OHSET** (Backlog) avec le label `Woodchuck` ? Tu peux aussi me demander des ajustements avant."
-- **Enrich mode**: "Voilà la version réécrite de [TICKET-ID]. Je mets à jour le ticket existant (label `Woodchuck` et état conservés) ? Ajustements possibles avant."
-- **Convert mode**: "Voilà la réécriture de [TICKET-ID] au format Woodchuck. Je l'enregistre et j'ajoute le label `Woodchuck` (le ticket reste dans son état actuel) ? Ajustements possibles avant."
+- **Create mode**: "Here's the draft. Shall I create the issue in the **OHSET** team (Backlog) with the `Woodchuck` label? You can also ask me for adjustments first."
+- **Enrich mode**: "Here's the rewritten version of [TICKET-ID]. Shall I update the existing ticket (`Woodchuck` label and state preserved)? Adjustments possible before saving."
+- **Convert mode**: "Here's the rewrite of [TICKET-ID] in Woodchuck format. Shall I save it and add the `Woodchuck` label (the ticket stays in its current state)? Adjustments possible before saving."
 
 **NEVER save without explicit approval.**
 

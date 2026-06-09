@@ -11,9 +11,9 @@ This is a **meta-skill**: the artifact under analysis is another skill's `SKILL.
 
 ## When to invoke
 
-- User explicitly asks for a retro on a skill: `/lm-skill-retro`, "post-mortem du skill X", "pourquoi le skill a raté"
+- User explicitly asks for a retro on a skill: `/lm-skill-retro`, "post-mortem du skill X" / "post-mortem of skill X", "pourquoi le skill a raté" / "why did the skill fail"
 - User shares an honest retro of a recent skill output ("Retro honnête, deux causes : 1. … 2. …") — this is the strongest signal
-- User says "améliore le skill X avec ce retour" — the retro has already been written, jump straight to step 3 (extract root causes) and skip the interview
+- User says "améliore le skill X avec ce retour" / "improve skill X with this feedback" — the retro has already been written, jump straight to step 3 (extract root causes) and skip the interview
 - User reports a skill produced a wrong/missed/dangerous result, even without using the word "retro"
 
 If the user just wants to add a feature to a skill without a failure context, use `/skill-creator` directly. This skill is specifically for the failure → root-cause → patch loop.
@@ -75,7 +75,7 @@ Show this to the user and confirm before handing off.
 Once the user agrees with the diagnosis and patch kinds, invoke the skill-creator skill explicitly:
 
 ```
-Call: Skill(skill="skill-creator", args="améliore <skill-name> avec ces patches : <copy the table from step 3>")
+Call: Skill(skill="skill-creator", args="improve <skill-name> with these patches: <copy the table from step 3>")
 ```
 
 The handoff prompt to skill-creator must include:

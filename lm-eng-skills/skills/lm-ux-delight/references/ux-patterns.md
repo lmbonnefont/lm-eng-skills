@@ -1,76 +1,74 @@
-# Catalogue de Patterns UX
+# UX Patterns Catalog
 
-Patterns UX éprouvés dans le codebase alan-apps. Référencé par `/lm-ux-delight` pour
-générer des recommandations contextuelles.
+Proven UX patterns in the alan-apps codebase. Referenced by `/lm-ux-delight` to
+generate contextual recommendations.
 
-Chaque pattern suit le format : Name, When, What, Evidence, Effort, Key detail.
-
----
-
-## 1. Suggestions anticipées
-
-**Quand** : Dropdown ou autocomplete avec un petit dataset (<20 items).
-**Quoi** : Montrer les N premières options au focus, avant que l'utilisateur ne tape quoi que
-ce soit. Pour les petites listes, l'utilisateur peut choisir visuellement sans avoir à se souvenir
-de la valeur exacte.
-**Evidence** : PR #87355 — Dropdown NIC des établissements DSN. Montre 5 suggestions par défaut
-au focus. Implémentation : suppression du guard `!searchInput` dans useMemo, ajout de
-`slice(0, MAX_DEFAULT_NIC_SUGGESTIONS)` pour l'état par défaut.
-**Effort** : Trivial
-**Détail clé** : Utiliser un blur delay de 200ms pour laisser le temps au clic sur une suggestion
-de s'enregistrer avant la fermeture du dropdown.
+Each pattern follows the format: Name, When, What, Evidence, Effort, Key detail.
 
 ---
 
-## 2. Liens directs vers le résultat
+## 1. Anticipated suggestions
 
-**Quand** : Toute action qui crée, déclenche ou modifie une ressource que l'utilisateur voudra
-voir immédiatement (créer une entité, envoyer un message, déclencher un export, etc.).
-**Quoi** : Après le succès de l'action, fournir un lien direct vers le résultat au lieu de laisser
-l'utilisateur le chercher manuellement. Remplacer les toasts "Succès !" par
-"Succès ! [Voir la conversation →]".
-**Evidence** : Pattern PR #87071 — Création de conversation Intercom pour les changements membre.
-Le backend retourne l'URL de la conversation pour que le frontend puisse linker directement
-au lieu de demander à l'admin d'ouvrir Intercom et chercher.
-**Effort** : Moyen (nécessite que le backend retourne l'identifiant/URL de la ressource créée)
-**Détail clé** : Le lien doit être l'action primaire du feedback de succès, pas un élément
-secondaire caché dans un toast qui disparaît.
+**When**: Dropdown or autocomplete with a small dataset (<20 items).
+**What**: Show the first N options on focus, before the user types anything. For small
+lists, the user can choose visually without having to remember the exact value.
+**Evidence**: PR #87355 — NIC dropdown for DSN establishments. Shows 5 suggestions by default
+on focus. Implementation: remove the `!searchInput` guard in useMemo, add
+`slice(0, MAX_DEFAULT_NIC_SUGGESTIONS)` for the default state.
+**Effort**: Trivial
+**Key detail**: Use a blur delay of 200ms to give the click on a suggestion time
+to register before the dropdown closes.
 
 ---
 
-## 3. Comportements input intelligents
+## 2. Direct links to the result
 
-**Quand** : Formulaires avec des champs texte, en particulier quand il y a un champ d'action
-principal.
-**Quoi** : Auto-focus sur le premier input significatif au mount. Auto-select du contenu texte
-quand l'utilisateur focus un champ pré-rempli (pour pouvoir écraser sans triple-clic).
-Blur delays sur les dropdowns pour éviter les fermetures accidentelles.
-**Evidence** : Divers formulaires du dashboard admin.
-**Effort** : Trivial
-**Détail clé** : Ne pas auto-focus si la page a un scroll — l'auto-focus qui déclenche un scroll
-vers le bas est désorientant pour l'utilisateur.
-
----
-
-## 4. Masquer les sections vides
-
-**Quand** : Composant qui affiche N sections groupées (DrawerCollection, liste tabulée, accordéon) où certaines sections peuvent être vides selon le contexte.
-**Quoi** : Conditionner le render de chaque section sur `items.length > 0`. Ne jamais afficher un titre de groupe sans contenu en dessous.
-**Evidence** : OHSET-521 — modal latérale pluriel avec DrawerCollection Médecins / Infirmières. Si tous les sans-réponse sont du même type, la section vide donne l'impression d'un bug.
-**Effort** : Trivial
-**Détail clé** : Vérifier aussi le cas où TOUTES les sections seraient vides — ajouter un empty state global dans ce cas plutôt que de ne rien afficher du tout.
+**When**: Any action that creates, triggers, or modifies a resource the user will want
+to see immediately (create an entity, send a message, trigger an export, etc.).
+**What**: After the action succeeds, provide a direct link to the result instead of leaving
+the user to find it manually. Replace "Success!" toasts with
+"Success! [View the conversation →]".
+**Evidence**: Pattern from PR #87071 — Intercom conversation creation for member changes.
+The backend returns the conversation URL so the frontend can link directly
+instead of asking the admin to open Intercom and search.
+**Effort**: Medium (requires the backend to return the identifier/URL of the created resource)
+**Key detail**: The link must be the primary action of the success feedback, not a
+secondary element hidden in a toast that disappears.
 
 ---
 
-## 5. Empty states distincts : données vides vs résultat filtré
+## 3. Smart input behaviors
 
-**Quand** : Liste ou table filtrable où l'utilisateur peut atteindre zéro résultat soit parce qu'il n'y a aucune donnée, soit parce que ses filtres ne matchent rien.
-**Quoi** : Afficher deux empty states distincts. Données vides → message neutre ("Aucun X pour le moment"). Résultat filtré vide → message + lien "Réinitialiser les filtres".
-**Evidence** : OHSET-586 — table read-only des actions en milieu de travail (dashboard Occupational Health employeur).
-**Effort** : Trivial
-**Détail clé** : Distinguer les deux cas évite que l'utilisateur croie qu'il n'a aucune donnée alors que c'est juste son filtre. Le lien reset doit vider tous les filtres en un clic (utile avec des filtres multi-dimensions).
+**When**: Forms with text fields, especially when there is a primary action field.
+**What**: Auto-focus the first meaningful input on mount. Auto-select the text content
+when the user focuses a pre-filled field (so they can overwrite without triple-clicking).
+Blur delays on dropdowns to avoid accidental closures.
+**Evidence**: Various admin dashboard forms.
+**Effort**: Trivial
+**Key detail**: Don't auto-focus if the page has a scroll — an auto-focus that triggers a scroll
+down is disorienting for the user.
 
 ---
 
-_Ce catalogue grandit avec le temps. Après chaque `/lm-ux-delight`, les nouveaux patterns
-découverts et adoptés sont ajoutés ici._
+## 4. Hide empty sections
+
+**When**: Component that displays N grouped sections (DrawerCollection, tabbed list, accordion) where some sections can be empty depending on context.
+**What**: Condition the render of each section on `items.length > 0`. Never display a group title without content underneath.
+**Evidence**: OHSET-521 — plural side modal with DrawerCollection Doctors / Nurses. If all the non-responders are of the same type, the empty section looks like a bug.
+**Effort**: Trivial
+**Key detail**: Also check the case where ALL sections would be empty — add a global empty state in that case rather than showing nothing at all.
+
+---
+
+## 5. Distinct empty states: no data vs. filtered result
+
+**When**: Filterable list or table where the user can reach zero results either because there is no data, or because their filters match nothing.
+**What**: Display two distinct empty states. No data → neutral message ("No X yet"). Empty filtered result → message + "Reset filters" link.
+**Evidence**: OHSET-586 — read-only table of workplace actions (Occupational Health employer dashboard).
+**Effort**: Trivial
+**Key detail**: Distinguishing the two cases prevents the user from thinking they have no data when it's just their filter. The reset link should clear all filters in one click (useful with multi-dimension filters).
+
+---
+
+_This catalog grows over time. After each `/lm-ux-delight`, the new patterns
+discovered and adopted are added here._

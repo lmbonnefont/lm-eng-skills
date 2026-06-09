@@ -70,19 +70,19 @@ Beyond the catalog, reason about the specific feature flow:
 - Are there inputs that could have smarter defaults based on context already available?
 - Is there a "dead end" in the flow where the user has to navigate back manually?
 
-If you spot an opportunity not covered by the catalog, include it as "Nouvelle observation".
+If you spot an opportunity not covered by the catalog, include it as "New observation".
 
 ## Step 4: Generate Recommendations
 
 Produce **3 to 5** recommendations. Each follows this format:
 
 ```
-### {N}. {Titre court}
-**Pattern** : {nom du catalogue, ou "Nouvelle observation"}
-**Quoi** : Une phrase décrivant l'amélioration.
-**Pourquoi** : Bénéfice utilisateur concret (moins de clics, task completion plus rapide, moins d'erreurs).
-**Effort** : Trivial / Moyen
-**Exemple dans le repo** : {chemin fichier + ligne, ou réf PR — seulement si applicable}
+### {N}. {Short title}
+**Pattern**: {catalog name, or "New observation"}
+**What**: One sentence describing the improvement.
+**Why**: Concrete user benefit (fewer clicks, faster task completion, fewer errors).
+**Effort**: Trivial / Medium
+**Example in the repo**: {file path + line, or PR ref — only if applicable}
 ```
 
 Rules:
@@ -90,58 +90,58 @@ Rules:
 - At least 1 must be "Trivial" effort
 - Sort by effort (trivial first), then by estimated impact
 - Never recommend visual changes (colors, fonts, spacing, animations, icons)
-- "Moyen" means it needs backend changes or touches multiple files. "Trivial" means frontend-only, single file
-- If a recommendation matches a catalog pattern, reference it. If new, mark as "Nouvelle observation"
+- "Medium" means it needs backend changes or touches multiple files. "Trivial" means frontend-only, single file
+- If a recommendation matches a catalog pattern, reference it. If new, mark as "New observation"
 
 ## Step 5: Present to User
 
 Display a header:
 
 ```
-## Suggestions UX Delight pour {ticket-id}
+## UX Delight Suggestions for {ticket-id}
 
-Feature : {résumé 1 ligne}
-Flow actuel estimé : {nombre de clics} clics pour le happy path
+Feature: {1-line summary}
+Estimated current flow: {number of clicks} clicks for the happy path
 
 {recommendations}
 
 ---
-Ces suggestions sont optionnelles. Choisis celles qui valent le coup, ou passe.
+These suggestions are optional. Pick the ones worth it, or skip.
 ```
 
 Then use `AskUserQuestion` with `multiSelect: true`:
-- One option per recommendation (label: `"{N}. {titre court}"`, description: the "Quoi" line)
-- "Adopter toutes"
-- "Passer — continuer"
+- One option per recommendation (label: `"{N}. {short title}"`, description: the "What" line)
+- "Adopt all"
+- "Skip — continue"
 
 ## Step 6: Update Checkpoint
 
 **If any recommendations adopted**: Append to the checkpoint file:
 
 ```markdown
-## UX Delight (optionnel)
+## UX Delight (optional)
 {list of adopted recommendations, each as a short bullet}
 ```
 
 Insert between `## Part 2` and `## Part 3` (or at the end if Part 3 doesn't exist yet).
 
-**If skipped**: Append `## UX Delight (optionnel)\nPassé.`
+**If skipped**: Append `## UX Delight (optional)\nSkipped.`
 
 When used within the guided workflow, the adopted suggestions will be carried into the plan file
 so that Part 6 (Implementation) can account for them.
 
 ## Step 7: Enrich Catalog
 
-If any "Nouvelle observation" was adopted, ask:
+If any "New observation" was adopted, ask:
 
-"Ajouter ce pattern au catalogue UX pour les futures features ?"
+"Add this pattern to the UX catalog for future features?"
 
 If yes, append the new pattern to `references/ux-patterns.md` following the existing format.
 
 ## Principles
 
-- **Recommander, jamais imposer** — the user picks what matters
+- **Recommend, never impose** — the user picks what matters
 - **UX flow only** — clicks, navigation, defaults, feedback. Never visual design
-- **Réutiliser le contexte existant** — the checkpoint already has the code exploration. Don't re-explore
-- **Rester léger** — 3-5 suggestions, not a research report
-- **Référencer du concret** — link to real files, PRs, or patterns when possible
+- **Reuse the existing context** — the checkpoint already has the code exploration. Don't re-explore
+- **Stay lightweight** — 3-5 suggestions, not a research report
+- **Reference concrete things** — link to real files, PRs, or patterns when possible

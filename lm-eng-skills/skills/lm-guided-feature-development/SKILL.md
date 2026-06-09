@@ -45,8 +45,8 @@ last_completed_part: {1|2|3|4|5}
 {subagent JSON output + confirmed proposals from Step 3}
 {alternatives considered + rationale for choice (from Step 4, if run)}
 
-## UX Delight (optionnel)
-{adopted recommendations from /lm-ux-delight, or "Passé" / "Non exécuté"}
+## UX Delight (optional)
+{adopted recommendations from /lm-ux-delight, or "Skipped" / "Not run"}
 
 ## Part 3: Tracking
 {metrics + code, or "skipped"}
@@ -147,20 +147,22 @@ This drives: question selection (Step 3), Part 3 activation, Part 4 split logic,
 
 ### Step 3: Ask Clarifying Questions (via `/lm-grill-me`)
 
-Délégué à `/lm-grill-me` qui pilote l'interview avec `AskUserQuestion` (2-4 options concrètes par question, première option = recommandation). Centralise la logique d'interview et garantit le format structuré.
+Delegated to `/lm-grill-me`, which drives the interview with `AskUserQuestion` (2-4 concrete options per question, first option = recommendation). It centralizes the interview logic and guarantees the structured format.
 
-Invoquer la skill en caller mode avec le contexte de classification (Step 2) + pointer vers le question bank :
+Invoke the skill in caller mode with the classification context (Step 2) + a pointer to the question bank:
 
 ```
 Call: Skill(skill: "lm-grill-me", args: "--caller --bank references/product-questions.md --feature-type {classified_type}")
 ```
 
-Contexte à passer dans le prompt d'invocation :
-- Feature type classifié (form, list, wizard, etc.)
-- JSON de Part 1 Step 1 (deep-context si présent — `/lm-grill-me` skip les questions déjà résolues)
-- Acceptance criteria du ticket
+Context to pass in the invocation prompt:
+- Classified feature type (form, list, wizard, etc.)
+- JSON from Part 1 Step 1 (deep-context if present — `/lm-grill-me` skips questions that are already resolved)
+- Acceptance criteria from the ticket
 
-À la fin, `/lm-grill-me` retourne un JSON `{questions_asked, unresolved, decisions_summary}` à merger dans le bundle Part 1 avant Step 4 (Synthesis).
+**Scope = product/UX only.** Explicitly pass this instruction to `/lm-grill-me`: never ask an implementation/code/technical question (data model, API shape, persistence/storage mechanism, auth mechanism, pagination strategy, encryption, sync/async, idempotence). These decisions are made in Part 2 (Technical Plan), not here. If a technical ambiguity arises, note it for Part 2 rather than asking about it now.
+
+At the end, `/lm-grill-me` returns a JSON `{questions_asked, unresolved, decisions_summary}` to merge into the Part 1 bundle before Step 4 (Synthesis).
 
 ### Step 4: Synthesis & Confirmation
 
@@ -176,11 +178,11 @@ Write a summary: feature description, edge cases, acceptance criteria (original 
 
 **Goal**: Propose architecture, identify reusable components, list dependencies, find ALL impacted locations.
 
-**After Part 2 completes**: You MUST propose the UX delight pass to the user via the Part 2 gate options below — never silently skip it. The user decides whether to run it or not. If chosen, invoke `/lm-ux-delight {ticket-id}`. The delight skill reads the checkpoint (Part 1 specs + Part 2 exploration) to recommend UX micro-improvements without any additional codebase exploration. Adopted recommendations are written to the checkpoint as `## UX Delight (optionnel)` and carried into the plan file.
+**After Part 2 completes**: You MUST propose the UX delight pass to the user via the Part 2 gate options below — never silently skip it. The user decides whether to run it or not. If chosen, invoke `/lm-ux-delight {ticket-id}`. The delight skill reads the checkpoint (Part 1 specs + Part 2 exploration) to recommend UX micro-improvements without any additional codebase exploration. Adopted recommendations are written to the checkpoint as `## UX Delight (optional)` and carried into the plan file.
 
 ### Step 1: Flow Walkthrough (via `/lm-flow-walkthrough`)
 
-**Goal**: Trace the existing flow end-to-end and make sure the user understands how the current system works before proposing changes. Delegated to `/lm-flow-walkthrough` which produces annotated call chains + narrative explanations with `fichier:ligne` references.
+**Goal**: Trace the existing flow end-to-end and make sure the user understands how the current system works before proposing changes. Delegated to `/lm-flow-walkthrough` which produces annotated call chains + narrative explanations with `file:line` references.
 
 For each key entry point identified in Part 1 (endpoints, components, entities), launch a **subagent** that runs `/lm-flow-walkthrough` in **caller mode**:
 
@@ -217,17 +219,17 @@ For each key entry point identified in Part 1 (endpoints, components, entities),
    ```
 
 4. **Present the flow(s) to the user**: show the annotated call chain(s) from the subagent(s) using the `` `path/to/file:LINE` `` format. Use `AskUserQuestion`:
-   - "Oui, je comprends le flow existant — on passe aux modifications"
-   - "Explique l'étape [X] plus en détail"
-   - "Montre-moi le contenu du fichier [Y]"
+   - "Yes, I understand the existing flow — let's move on to the changes"
+   - "Explain step [X] in more detail"
+   - "Show me the contents of file [Y]"
 
 **Do not proceed to Step 2 until the user confirms they understand the current system.**
 
 ### Step 2: Reuse Discovery (via `/lm-reuse-discovery`)
 
-**Goal**: Chasser activement les fonctions/hooks/composants/types/factories déjà présents dans le repo qui peuvent couvrir les besoins de la feature, **avant** de proposer l'architecture. Évite la duplication systémique que le flow walkthrough (Step 1) ne capture pas — flow ne traverse que les chemins existants, pas les utils latéraux.
+**Goal**: Actively hunt for the functions/hooks/components/types/factories already present in the repo that can cover the feature's needs, **before** proposing the architecture. Avoids the systemic duplication that the flow walkthrough (Step 1) does not catch — the flow only traverses existing paths, not the side utilities.
 
-Lancer un subagent qui invoque la skill en caller mode :
+Launch a subagent that invokes the skill in caller mode:
 
 ```
 You MUST use the Skill tool to invoke the /lm-reuse-discovery skill. Do NOT search the codebase yourself — delegate to the skill.
@@ -239,17 +241,17 @@ Context : Part 1 specs are in `.claude/plans/feature-checkpoint-{ticket-id}.md`.
 Return the structured JSON output + human-readable summary. Do not interact with the user.
 ```
 
-Merger le JSON dans le bundle Part 2 sous `reuse_discovery`. Présenter le résumé textuel à l'utilisateur via `AskUserQuestion` :
-- "Réutilisations validées — continue vers l'architecture"
-- "Exclure certains candidats" (laisser saisir)
+Merge the JSON into the Part 2 bundle under `reuse_discovery`. Present the text summary to the user via `AskUserQuestion`:
+- "Reuse validated — continue to the architecture"
+- "Exclude some candidates" (let them type)
 - "Skip Reuse Discovery, build from scratch"
 
-**Le JSON `reuse_discovery` est passé au subagent Architecture Alternatives (Step 4) pour qu'il connaisse les briques réutilisables.**
+**The `reuse_discovery` JSON is passed to the Architecture Alternatives subagent (Step 4) so it knows the reusable building blocks.**
 
 ### Step 3: Architecture Proposal
 
 From the subagent outputs (flow walkthrough + reuse discovery) :
-1. Identify reuse vs. new build — **utiliser explicitement les candidats high/medium de `reuse_discovery`**
+1. Identify reuse vs. new build — **explicitly use the high/medium candidates from `reuse_discovery`**
 2. List dependencies (backend APIs, database changes, new packages)
 3. **List all breaking changes** from the subagent
 4. Propose tech stack with rationale
@@ -302,7 +304,7 @@ If the user picks an alternative: rework the architecture proposal from Step 3 t
 **Immediately after user confirms final architecture**: Update the checkpoint file `.claude/plans/feature-checkpoint-{ticket-id}.md` with the `## Part 2` section. Include both the chosen architecture and a brief note on which alternatives were considered and why they were accepted/rejected — this context helps Session 2 understand the reasoning.
 
 **Part 2 gate options** (override the default gate for this transition — always present ALL options via `AskUserQuestion`, never silently skip any):
-- "Run UX delight pass" (recommended) → invoke `/lm-ux-delight {ticket-id}`. The delight skill reads the checkpoint (Part 1 + Part 2) to suggest UX micro-improvements. Adopted suggestions are written to the checkpoint as `## UX Delight (optionnel)`.
+- "Run UX delight pass" (recommended) → invoke `/lm-ux-delight {ticket-id}`. The delight skill reads the checkpoint (Part 1 + Part 2) to suggest UX micro-improvements. Adopted suggestions are written to the checkpoint as `## UX Delight (optional)`.
 - "Skip UX delight, proceed to Part 3"
 - "Skip to Part 4"
 - "Stop here"
@@ -373,7 +375,7 @@ After Part 4 (no split) or Part 5 (split), write `.claude/plans/feature-plan-{ti
 {output from Part 2 subagent + confirmed proposals}
 
 ## Reuse Discovery
-{reuse_discovery JSON from Part 2 Step 2 — feature needs + accepted candidates with fichier:ligne references}
+{reuse_discovery JSON from Part 2 Step 2 — feature needs + accepted candidates with file:line references}
 
 ## UX Delight
 {adopted recommendations from /lm-ux-delight, or "N/A"}
