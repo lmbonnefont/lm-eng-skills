@@ -6,7 +6,7 @@ description: >
   (rules extracted from Bastien Landre & Mickaël Berguem's reviews), /lm-hardcore-review
   as the Architecture & Structure Review (abstractions, modularity, code judo, spaghetti)
   in parallel, plus a 6th Context Walkthrough agent that produces a non-technical summary +
-  glossary + flow via /lm-flow-walkthrough, shown as a preamble before the findings.
+  glossary, shown as a preamble before the findings.
   Aggregates findings into a P0-P3 report with source badges. Use when: /lm-review-all,
   "revue complète", "full review", "review everything", "all reviews on PR #123",
   "lance toutes les revues", or any request to run several reviews on the same changes.
@@ -16,14 +16,22 @@ description: >
 
 # Full Review (orchestrated)
 
-Launches 6 subagents in parallel: 5 reviews (`/review`, `/lm-local-compliance-review`,
-`/lm-ux-delight`, `/lm-reviewer-rules`, `/lm-hardcore-review` — the Architecture & Structure Review) in the
-background + 1 Context Walkthrough (glossary + flow) in the foreground.
-The walkthrough is shown as soon as it finishes, **before** aggregating the findings, so
-the reviewer can start reading the context while the reviews are still running.
+Launches the subagents you select at the start (any subset of 6) in parallel: 5 reviews (`/review`,
+`/lm-local-compliance-review`, `/lm-ux-delight`, `/lm-reviewer-rules`, `/lm-hardcore-review` —
+the Architecture & Structure Review) + 1 Context Walkthrough (summary + glossary). **All launched
+subagents run in the background and stay completely silent.** Nothing is shown to the reviewer
+until every one of them has finished — not even the Context preamble.
 
-The findings are then merged into a single report ranked by priority. Each finding cites
-its origin and includes `file:line` references.
+Once they are all done, the skill emits **a single block, posted at once**: the Context preamble
+(summary + glossary) first, then the merged findings ranked by priority. Each
+finding cites its origin and includes `file:line` references.
+
+> **Why fully deferred (not the old "show the preamble early" design):** a half-streamed report
+> is noise. Showing the ramp-up context first, then later interrupting with findings, fragments
+> the reviewer's attention and makes the run feel like it's talking to itself. One quiet wait,
+> one complete deliverable, is calmer and easier to act on. The early-preamble optimization
+> (start reading context while reviews run) was not worth the cost of a chatty, multi-part
+> output — so the whole run is now silent until the consolidated block is ready.
 
 This skill **orchestrates** — it does not review by itself. It delegates, aggregates, deduplicates.
 
@@ -33,6 +41,14 @@ This skill **orchestrates** — it does not review by itself. It delegates, aggr
 - `/lm-review-all PR#123` or `/lm-review-all https://github.com/.../pull/123` — specific PR
 - `/lm-review-all abc123f` — specific commit
 - `full review` / `revue complète` / `review everything` — natural-language trigger
+
+At the start of **every** run, the skill prints a numbered menu of the 6 subagents and waits for
+your reply (numbers / `all` / names) — see Step 2. There is no flag; the selection is always explicit.
+
+> **Token cost.** Running all 6 is ~6 subagents × ~80k tokens. Two levers keep it down:
+> - **Unticking subagents** at the Step 2 prompt — e.g. dropping Reviewer Rules + UX Delight saves ~30%.
+> - **Model tiering** (always on): the 2 non-reasoning subagents — Context Walkthrough and
+>   UX Delight — run on a cheaper model (`sonnet`), the 4 bug/structure reviewers stay on `opus`.
 
 ## Step 1: Determine the target
 
@@ -46,6 +62,9 @@ Use `$ARGUMENTS` if provided, otherwise auto-detect:
 
 Also extract the **ticket ID** from the branch or PR title (pattern `EP-XXXX`, `OHSET-XXX`,
 `SIM-XXXX`, etc.) for `/lm-ux-delight`.
+
+The **set of subagents to launch** (`SELECTED`) is not derived from args — it is asked
+explicitly via checkboxes in Step 2 just below.
 
 ## Step 1.5: Pre-compute the PR scope (DIFF_FILES)
 
@@ -64,7 +83,45 @@ Store the result as `DIFF_FILES` (list of paths, one per line).
 > A UX Delight subagent that sees the whole branch will produce suggestions for files this PR
 > does not touch, polluting the report and misleading the reviewer.
 
-## Step 2: Prepare the UX Delight context
+## Step 2: Ask the user which subagents to launch
+
+**Always ask — there is no flag and no default set.** This is the **only** interactive moment in
+the whole run; the orchestrator asks it (the subagents never interact with the user).
+
+**Do NOT use `AskUserQuestion`** — its hard cap of 4 options per question can't present all 6
+subagents in one flat list. Instead, print the menu below as a normal message and **wait for the
+user's reply**:
+
+```
+Which subagents do you want to launch? Reply with the numbers (e.g. `1 3 6`), `all`, or names.
+
+1. Code Review — /review (bugs, quality, tests)
+2. Compliance — /lm-local-compliance-review (conventions, ruler rules)
+3. Reviewer Rules — /lm-reviewer-rules (Bastien & Mickaël's review patterns)
+4. Architecture & Structure — /lm-hardcore-review (abstractions, modularity, spaghetti)
+5. UX Delight — /lm-ux-delight (UX micro-improvements, frontend PRs)
+6. Context Walkthrough — summary + glossary preamble (cheap, on sonnet)
+```
+
+Parse the reply into the set `SELECTED`:
+- `all` (or an empty reply) → all 6.
+- numbers and/or names → exactly those subagents.
+- a clear decline / nothing valid → launch nothing, say so, and stop (nothing to wait for).
+
+`SELECTED` may be any subset of the 6 — launch only those, in one parallel message (Step 3).
+Everything downstream keys off `SELECTED`: the launch (Step 3), the barrier count (Step 4.5),
+which scratch files to read (Step 4), and which rows appear in the Sources line + token table
+(Step 5). A subagent not in `SELECTED` is simply absent everywhere — not a missing source.
+
+This menu message is allowed (it is before the Step 4.5 barrier, which starts at launch). After
+the user replies, the run goes **silent** — no further questions or narration until Step 5.
+
+After this single question, the run goes **silent** per the Step 4.5 barrier — no further
+questions, no narration, until the consolidated block.
+
+## Step 2.5: Prepare the UX Delight context
+
+**Skip this step entirely if UX Delight is not in `SELECTED`** (it was not launched).
 
 `/lm-ux-delight` works best from a checkpoint, not a PR.
 
@@ -73,44 +130,55 @@ Store the result as `DIFF_FILES` (list of paths, one per line).
 3. **If no checkpoint** → the UX Delight subagent is instructed to analyze the PR's changed files
    to identify UX opportunities (degraded mode, less precise but still useful)
 
-## Step 3: Launch the 6 subagents in parallel (asymmetric orchestration)
+## Step 3: Launch the subagents in parallel (all background, all silent)
 
-**The walkthrough must not block the findings, and the Context preamble in particular
-must be shown before the reviews are finished.**
+**No output of any kind before all the launched subagents have finished — including the Context
+Walkthrough.** There is no early preamble anymore.
 
-In **a single message**, launch:
+In **a single message**, launch **only the subagents in `SELECTED`** (from Step 2) with
+`run_in_background: true`. Pass each one the `model` shown below via the Agent tool's `model`
+parameter (model tiering — the cheap-cognition subagents do not need Opus):
 
-- Subagent 1 (Code Review) with `run_in_background: true`
-- Subagent 2 (Compliance Review) with `run_in_background: true`
-- Subagent 3 (UX Delight) with `run_in_background: true`
-- Subagent 4 (Reviewer Rules) with `run_in_background: true`
-- Subagent 5 (Architecture & Structure Review) with `run_in_background: true`
-- Subagent 6 (Context Walkthrough) **in the foreground** (no `run_in_background`,
-  or `run_in_background: false`)
+| # | Subagent | `model` |
+|---|---|---|
+| 1 | Code Review | `opus` |
+| 2 | Compliance Review | `opus` |
+| 3 | UX Delight | `sonnet` |
+| 4 | Reviewer Rules | `opus` |
+| 5 | Architecture & Structure Review | `opus` |
+| 6 | Context Walkthrough | `sonnet` |
 
-Behavior: the message blocks only on the walkthrough. As soon as it returns, go straight
-to **Step 4.4** (show the preamble). The 5 reviews keep running in the background; their
-completion notifications arrive later — each carries only a content-free ack (the findings
-live in a scratch file, see the file-handoff contract below) — and trigger Step 4
-(aggregation) + Step 5 (findings).
+Launch the rows that are in `SELECTED` and skip the rest. The model tiering is fixed regardless
+of selection: Context Walkthrough and UX Delight on `sonnet`, the bug/structure reviewers on
+`opus`. (If summary/glossary quality on `sonnet` proves too thin, bump those two back to `opus` —
+but tiering is the default.)
+
+Behavior: the launching message blocks on nothing. The launched subagents run concurrently and
+write their output to a scratch file (see the file-handoff contract below), each returning only
+a content-free ack. Their completion notifications arrive over time; you stay silent through all
+of them (Step 4.5 barrier). Only once **all launched subagents** have returned do you read the
+scratch files and emit the single consolidated block (Step 4 → Step 5).
 
 **IMPORTANT**: no subagent must interact with the user. No `AskUserQuestion`, no interactive
-mode. The 5 review subagents write their report to a scratch file and return only a
-content-free ack; subagent 6 (foreground) returns its narrative inline because it feeds the
-preamble.
+mode. **Every launched subagent** — including the Context Walkthrough — writes its output to a
+scratch file and returns only a content-free ack.
 
-### File-handoff contract (closes the per-agent findings leak)
+### File-handoff contract (closes the per-agent output leak)
 
 A `run_in_background` agent's **return value is rendered verbatim in its completion
-notification** — which is visible in the conversation the moment that agent finishes. So if a
-review's findings travel in its return value, the reviewer sees them per-agent, un-deduplicated
-and un-prioritized, *before* the aggregation in Step 4. That is precisely the noise the Hard
+notification** — which is visible in the conversation the moment that agent finishes. So if an
+agent's findings (or the walkthrough narrative) travel in its return value, the reviewer sees
+them per-agent, *before* the consolidated block in Step 5. That is precisely the noise the Hard
 barrier (Step 4.5) exists to prevent, and the orchestrator staying silent in its own prose is
 **not enough** to stop it — the leak comes from the agents' payloads, not the orchestrator.
 
-The fix: route each review's report through a file, so the notification stays content-free.
-Each of the **5 review subagents** (NOT subagent 6) writes its full report with the Write tool
-to a dedicated scratch file, then returns only a one-line ack containing the path:
+This is exactly why subagent 6 cannot just be "background": if it returned its narrative inline,
+that narrative would surface in its completion notification and break the "stay silent until all
+launched subagents finish" guarantee. So it follows the same contract as the others.
+
+The fix: route every agent's output through a file, so the notification stays content-free.
+Each launched subagent writes its full output with the Write tool to a dedicated scratch
+file, then returns only a one-line ack containing the path:
 
 | Source | Scratch file |
 |---|---|
@@ -119,9 +187,10 @@ to a dedicated scratch file, then returns only a one-line ack containing the pat
 | `/lm-ux-delight` | `tmp/agent-scratch/review-all-ux-delight.md` |
 | `/lm-reviewer-rules` | `tmp/agent-scratch/review-all-rules.md` |
 | `/lm-hardcore-review` (Architecture & Structure Review) | `tmp/agent-scratch/review-all-architecture.md` |
+| Context Walkthrough | `tmp/agent-scratch/review-all-context.md` |
 
 The ack must contain the **path only** — no titles, no `file:line`, no priorities, not even a
-finding count (a count is still a status leak the barrier forbids). A review that finds nothing
+finding count (a count is still a status leak the barrier forbids). An agent that finds nothing
 writes `No issues found.` into its file and still returns only the ack.
 
 ### Subagent 1: Code Review
@@ -148,6 +217,8 @@ content-free ack (no titles, no file:line, no priorities, no count), nothing els
 WROTE tmp/agent-scratch/review-all-review.md
 
 Do NOT use AskUserQuestion. Do NOT ask questions. Just write the file and return the ack.
+Stay completely silent while you work: emit NO intermediate prose, narration, plan, or
+"the file already has content…" notes. Work quietly, write the file, return the ack — nothing else.
 ```
 
 ### Subagent 2: Compliance Review
@@ -174,6 +245,8 @@ content-free ack (no titles, no file:line, no priorities, no count), nothing els
 WROTE tmp/agent-scratch/review-all-compliance.md
 
 Do NOT use AskUserQuestion. Do NOT ask questions. Just write the file and return the ack.
+Stay completely silent while you work: emit NO intermediate prose, narration, plan, or
+"the file already has content…" notes. Work quietly, write the file, return the ack — nothing else.
 ```
 
 ### Subagent 3: UX Delight
@@ -200,6 +273,8 @@ this content-free ack (path only, nothing else):
 WROTE tmp/agent-scratch/review-all-ux-delight.md
 
 Do NOT use AskUserQuestion. Just write the file and return the ack.
+Stay completely silent while you work: emit NO intermediate prose, narration, plan, or
+"the file already has content…" notes. Work quietly, write the file, return the ack — nothing else.
 ```
 
 **If no checkpoint:**
@@ -234,6 +309,8 @@ Your final message must be ONLY this content-free ack (path only, nothing else):
 WROTE tmp/agent-scratch/review-all-ux-delight.md
 
 Do NOT use AskUserQuestion with the end user.
+Stay completely silent while you work: emit NO intermediate prose, narration, plan, or
+"the file already has content…" notes. Work quietly, write the file, return the ack — nothing else.
 ```
 
 ### Subagent 4: Reviewer Rules (Bastien & Mickaël)
@@ -260,6 +337,8 @@ content-free ack (path only, nothing else):
 WROTE tmp/agent-scratch/review-all-rules.md
 
 Do NOT use AskUserQuestion. Do NOT ask questions. Just write the file and return the ack.
+Stay completely silent while you work: emit NO intermediate prose, narration, plan, or
+"the file already has content…" notes. Work quietly, write the file, return the ack — nothing else.
 ```
 
 ### Subagent 5: Architecture & Structure Review (abstractions, modularity, code judo, spaghetti)
@@ -300,13 +379,17 @@ content-free ack (path only, nothing else):
 WROTE tmp/agent-scratch/review-all-architecture.md
 
 Do NOT use AskUserQuestion. Do NOT ask questions. Just write the file and return the ack.
+Stay completely silent while you work: emit NO intermediate prose, narration, plan, or
+"the file already has content…" notes. Work quietly, write the file, return the ack — nothing else.
 ```
 
-### Subagent 6: Context Walkthrough (summary + glossary + flow)
+### Subagent 6: Context Walkthrough (summary + glossary)
 
-The 6th subagent runs **in parallel with the other 5 in the same Agent message**, but in
-the **foreground** (the other 5 are `run_in_background: true`). Its result feeds the report
-preamble (Step 4.4) and does not take part in the P0-P3 aggregation.
+The 6th subagent runs **in parallel with the other 5 in the same Agent message**, also in the
+**background** (`run_in_background: true`, like the other 5). Its output feeds the report
+preamble (Step 5) and does not take part in the P0-P3 aggregation. Like the reviews, it writes
+its output to a scratch file and returns only a content-free ack — so nothing it produces leaks
+into its completion notification before the consolidated block.
 
 Subagent prompt:
 
@@ -314,19 +397,26 @@ Subagent prompt:
 PR scope — the ONLY files changed in this PR:
 {DIFF_FILES}
 
-Scope your outputs strictly to these files. The summary, glossary, and walkthroughs must
+Scope your outputs strictly to these files. The summary and glossary must
 only describe what these files do. Do not mention or describe files outside this list.
 This is especially important for the summary: if a file appears on the branch but is NOT
 in DIFF_FILES, it is not part of this PR and must not appear in any output.
 
 You are building ramp-up context for a PR reviewer. Do NOT review code quality —
 that is other subagents' job. Your job: help the reviewer understand WHAT the PR
-touches and HOW the current code works.
+touches.
 
-Produce 3 outputs:
+**Stay completely silent until you have finished.** While you gather context (running
+`gh`/`git`, grepping, calling MCP tools), emit NO intermediate text: no narration, no
+progress notes, no "here is what I found so far", no partial summary or glossary. Work
+quietly from start to end. The ONLY thing you ever emit is, at the very end, the
+content-free ack below — after the file is fully written. Everything you produce goes
+into the scratch file, nothing into the conversation before you are done.
+
+Produce 2 outputs:
 
 ---
-**OUTPUT 0 — Non-technical summary** (3-5 sentences, in French)
+**OUTPUT 0 — Non-technical summary** (3-5 sentences, in English)
 
 Goal: let anyone (even a non-dev, or a dev who doesn't know the domain) understand in
 20 seconds WHAT the PR does and WHY, before diving into the technical detail.
@@ -337,9 +427,8 @@ Goal: let anyone (even a non-dev, or a dev who doesn't know the domain) understa
      + changed files (list from the step below)
    - If a ticket ID is present (EP-XXXX, OHSET-XXX, etc.) in the title or branch,
      try `mcp__linear__get_issue` to enrich with the ticket's product description.
-2. Write 3-5 short sentences, **without technical jargon**, IN FRENCH (this deliverable
-   is for French-speaking, often non-dev readers — keep the prose French even though the
-   rest of these instructions are in English):
+2. Write 3-5 short sentences, **without technical jargon**, IN ENGLISH (consistent with the
+   rest of the report — skeleton, findings, and section titles are all English):
    - Sentence 1: the user/business problem or need the PR addresses.
    - Sentences 2-3: what the PR concretely changes, from the user's or operational point
      of view (not "adds endpoint X" but "lets OH admins see Y in the dashboard").
@@ -350,7 +439,7 @@ Goal: let anyone (even a non-dev, or a dev who doesn't know the domain) understa
    `[to confirm with the PR author]` — do not invent a product motivation.
 
 Format:
-> {3-5 sentences of prose, in French, readable by a non-dev}
+> {3-5 sentences of prose, in English, readable by a non-dev}
 
 ---
 **OUTPUT 1 — Glossary** (3-5 terms)
@@ -371,136 +460,107 @@ Format:
 - **{TERM}** — {1-sentence definition}. Ref: `path/to/file:line`
 
 ---
-**OUTPUT 2 — Walkthroughs** (scope PR-only)
 
-1. From the diff file list, list every modified function/component that could
-   START a flow:
-   - Backend: files under `**/controllers/**`, `**/public/**` — each modified function
-   - Frontend: files under `**/screens/**`, `**/hooks/**`, `**/src/pages/**` — each
-     modified exported function/component
-   - Ignore: tests, migrations, `__pycache__`, generated files, `.ruler/`
-   This is a list of *candidates*, NOT the final entry-point list — go to step 1b.
-1b. **Collapse chained candidates into independent flows.** An entry point is the
-   ROOT of an *independent* flow, not merely "a modified function". Many PRs modify
-   several functions that are actually different stages of ONE flow (A calls B, B
-   calls C — A→B→C). In that case there is **one** entry point (A); B and C are
-   internal steps of A's flow, not separate entry points.
-   - Trace the call relationships between the candidates from step 1 (grep each
-     candidate's name across the other modified files; read the diff to see who calls whom).
-   - Whenever candidate X is reached (directly or transitively) from another candidate Y,
-     X is NOT an entry point — it is a step inside Y's flow. Drop it from the entry-point
-     list and remember to surface it as a hop *within* Y's walkthrough.
-   - The final entry-point list contains only flow ROOTS: candidates that no other
-     candidate calls. Two entry points are distinct only if neither reaches the other.
-   - **Why this matters:** presenting "3 entry points" when the 3 functions are one
-     chained flow is actively misleading — it tells the reviewer there are 3 independent
-     surfaces to understand when there is really 1. Count and present *independent flows*,
-     not touched functions.
-2. Keep in memory the **SET of modified files** (from step 1 of OUTPUT 1).
-   This set = "PR scope". Files outside this set = "out of scope".
-3. For EACH entry point found, invoke `/lm-flow-walkthrough` in caller mode:
-
-   Call: Skill(skill: "lm-flow-walkthrough", args: "--caller {file}:{function}")
-
-   The skill returns both a JSON blob and a human-readable output. Keep only
-   the human-readable narrative (Section A call chain + Section B evidence
-   trace) — drop the JSON.
-4. **Trim the narrative before returning it**:
-   - For hops / call chain steps pointing to files **IN PR scope** → keep
-     the detailed explanation as returned by the skill (rules, edge cases,
-     deep dive).
-   - For hops pointing to files **OUT of PR scope** → replace detailed
-     explanation with a one-liner narrative + clickable `file:line`.
-     Example: `→ calls get_subscriber_establishments in
-     [establishments.py:18](backend/.../establishments.py#L18) (out of PR
-     scope, not detailed).`
-   - Drop `[GAP]` markers that land on out-of-scope files (noise for
-     ramp-up of THIS PR).
-5. If the list has more than 5 entry points, trace the top 5 by "centrality"
-   (controllers before utils, new files before modified, bigger diffs first)
-   and add a note: "N-5 more entry points not traced — ask if needed."
-
-Return the 3 outputs concatenated in order (Summary → Glossary → Walkthroughs).
-Do NOT use AskUserQuestion. Do NOT wait for other subagents. Do NOT produce P0-P3
+Write the 2 outputs concatenated in order (Summary → Glossary) to
+tmp/agent-scratch/review-all-context.md with the Write tool. Do NOT produce P0-P3
 findings — that's not your job.
+
+Do NOT put the outputs in your final message: that would surface them in your completion
+notification before the orchestrator is ready to emit the consolidated block. Your final
+message must be ONLY this content-free ack (path only, nothing else):
+
+WROTE tmp/agent-scratch/review-all-context.md
+
+Do NOT use AskUserQuestion. Do NOT wait for other subagents (they run in parallel) — just
+write your file and return the ack. Remember: nothing leaves this agent until you are
+finished — silent throughout, then the ack only.
 ```
 
-## Step 4.4: Show the context preamble as soon as the walkthrough is ready
+## Step 4.5: Wait — in total silence — for all launched background notifications
 
-Subagent 6 (foreground) returns `Summary` + `Glossary` + `Walkthroughs`.
-**Show this block immediately** to the user, without waiting for the 5 background reviews.
-The Summary comes **first**: it's the non-technical angle that aligns the reviewer on the
-"why" before diving into the "how".
+Don't poll. The completion notifications of the launched subagents arrive via the runtime.
+Know how many you launched (= the count of `SELECTED`) and wait for **exactly that many** to
+return — do not wait for 6 if you launched fewer, or the run hangs. When all launched subagents
+have returned, proceed to Step 4 (P0-P3 aggregation) then Step 5 (the single consolidated block:
+preamble + findings together).
 
-Note: the Summary text itself is produced in French (it's the user-facing artifact, written
-for French-speaking, often non-dev readers); the report skeleton and section titles below are
-in English.
+**Capture token + timing data as each notification arrives.** Every subagent's `<task-notification>`
+— the 5 reviews AND the Context Walkthrough (subagent 6) — ends with a `<usage>` block in this
+exact shape:
 
 ```
-## Full review — {target}
-
-### 📚 PR context (ramp-up)
-
-**Summary**
-{non-technical summary from subagent 6, 3-5 sentences of prose}
-
-**Glossary**
-{glossary list from subagent 6}
-
-**Walkthroughs**
-{walkthroughs from subagent 6, one per independent flow}
-
----
-_Reviews running in the background (/review, /lm-local-compliance-review, /lm-ux-delight, /lm-reviewer-rules, Architecture & Structure Review)..._
+<usage><subagent_tokens>18622</subagent_tokens><tool_uses>0</tool_uses><duration_ms>1883</duration_ms></usage>
 ```
 
-No merge/dedup, no re-prioritization. Plain relay.
+Parse the three fields from that block the instant the notification arrives, keyed by source:
+- `<subagent_tokens>` → the token count for that subagent (this is the field to sum — NOT
+  `total_tokens`, which does not exist in the notification).
+- `<duration_ms>` → wall-clock in milliseconds (divide by 1000 for the table's seconds column).
+- `<tool_uses>` → number of tool calls (optional, informational).
 
-## Step 4.5: Wait for the background notifications
+Record each value in memory immediately so you can report the total in Step 5. This is **silent
+bookkeeping**: it does NOT violate the Hard barrier below, which forbids emitting *findings* or
+*progress status* — not internal note-taking. The numbers surface only once, in the Step 5
+consolidated block. If a notification truly lacks the `<usage>` block, mark that source's tokens
+as `n/a` rather than guessing — never invent a count. Note: this total covers the **subagents
+only**; the orchestrator's own context-window usage is not exposed to it and is therefore
+excluded (state this in the summary).
 
-Don't poll. The completion notifications of the 5 subagents arrive via the runtime.
-When all have returned, proceed to Step 4 (P0-P3 aggregation) then Step 5 (showing the
-findings under the already-posted preamble).
+> **"Record in memory" means produce ZERO output tokens — do not narrate the bookkeeping.**
+> "In memory" is literal: as each notification arrives, parse its `<usage>` and move on WITHOUT
+> writing a single word. The following are **violations**, even though they feel like harmless
+> status:
+> - `Context Walkthrough done (2/6). Recording: 100654 tokens, 66s.`
+> - `Recording tokens…`, `Captured X/6`, `Staying silent.`
+>
+> Announcing that you are staying silent is itself breaking silence. There is no "noting"
+> turn between notifications: you emit nothing at all until the Step 5 block. Your first output
+> token of the entire run is the `## Full review` title.
 
-> **Hard barrier — aggregate first, emit once.** Between the preamble (Step 4.4, already
-> posted) and the consolidated findings block (Step 5), stay **completely silent**. As long
-> as the 5 review subagents have not ALL returned, emit **no** finding and **no** progress
-> status. A PR's findings appear only **once**, as a fully aggregated + deduplicated P0-P3
-> block.
+> **Hard barrier — say nothing until all launched subagents are done, then emit once.** From the
+> moment you launch the subagents (Step 3) until the consolidated block (Step 5), stay
+> **completely silent**. As long as the launched subagents have not ALL returned, emit **no**
+> preamble, **no** finding, and **no** progress status. The entire deliverable — Context preamble
+> *and* findings — appears only **once**, as a single block.
 >
 > **The barrier has two leak channels, not one.** Your own prose is the obvious one. The
 > second — easy to miss — is the **agents' return values**: a `run_in_background` agent's
 > final message is rendered verbatim in its completion notification, visible in the
 > conversation the instant it finishes. Staying silent yourself does nothing about that. The
-> file-handoff contract (Step 3) is what closes it: each review writes its report to a scratch
-> file and returns only a content-free ack, so the notifications carry no findings. If a
-> notification ever contains actual findings (titles, `file:line`, priorities), the agent
-> ignored the contract — do NOT relay it; read the scratch file in Step 4 instead.
+> file-handoff contract (Step 3) is what closes it: each subagent (including the Context
+> Walkthrough) writes its output to a scratch file and returns only a content-free ack, so the
+> notifications carry nothing. If a notification ever contains actual content (findings, the
+> walkthrough narrative, `file:line`, priorities), that agent ignored the contract — do NOT
+> relay it; read the scratch file in Step 4 instead.
 >
-> Concretely, between the preamble and the final block the following are **forbidden**:
+> Concretely, before the consolidated block the following are **forbidden**:
+> - showing the Context preamble early (it now waits for the findings — no exception);
 > - pushing an agent's findings the moment it finishes (per-agent output, as it streams in);
-> - any status line like "3/5 returned", "waiting for the Architecture & Structure Review", "X has finished";
+> - any status line like "3/6 returned", "waiting for the Architecture & Structure Review", "X has finished";
 > - any partial report or visible pre-aggregation.
 >
-> **Why:** findings shown per-agent as they trickle in are neither deduplicated nor
-> prioritized — the reviewer sees the same problem flagged 3 times by 3 sources, without
-> the merged `[review + architecture]` badge or the final P0-P3 priority. The merge work (Step 4)
-> is precisely what sets this skill apart from a raw fan-out. Emitting before the merge
-> destroys that value and produces a noisy, misleading report. The early preamble, however,
-> stays useful (ramp-up context independent of the findings) — it is the only output allowed
-> before the consolidated block.
+> **Why:** a half-streamed report is noise. Findings shown per-agent as they trickle in are
+> neither deduplicated nor prioritized — the reviewer sees the same problem flagged 3 times by
+> 3 sources, without the merged `[review + architecture]` badge or the final P0-P3 priority.
+> The merge work (Step 4) is precisely what sets this skill apart from a raw fan-out. And the
+> preamble, posted early, would fragment the reviewer's attention before the findings even
+> arrive. One quiet wait, one complete deliverable, is calmer and more useful — so everything
+> waits for the consolidated block.
 
 ## Step 4: Aggregate and map the priorities
 
-Only **start** this step once the **5** review subagents have returned (see the Step 4.5
-barrier). All the merging below happens in memory, displaying nothing — the first findings
-output is the consolidated block in Step 5.
+Only **start** this step once **all launched** subagents have returned (see the Step 4.5
+barrier). All the merging below happens in memory, displaying nothing — the first output of any
+kind is the consolidated block in Step 5.
 
-**Read the findings from the scratch files, not from the agents' acks.** Each review wrote its
-report to its `tmp/agent-scratch/review-all-*.md` file (see the Step 3 file-handoff contract);
-the acks in the notifications carry only paths. Read all 5 files, then merge per this table.
-If a file is missing (an agent failed to write it), note it explicitly in the Sources line of
-Step 5 rather than silently dropping that source.
+**Read every output from the scratch files, not from the agents' acks.** Each subagent wrote to
+its `tmp/agent-scratch/review-all-*.md` file (see the Step 3 file-handoff contract); the acks in
+the notifications carry only paths. Read the files for the subagents you launched: the **review
+files** feed the P0-P3 merge below, and the **Context Walkthrough file** (`review-all-context.md`)
+becomes the preamble at the top of Step 5 (it does NOT take part in the P0-P3 aggregation — just
+relay it). Subagents not in `SELECTED` wrote no file — that is expected, not a missing source.
+If a file from a subagent you **did** launch is missing (it failed to write), note it explicitly
+in the Sources line of Step 5 rather than silently dropping that source.
 
 | Aggregated priority | Source | Original priority |
 |---|---|---|
@@ -529,14 +589,30 @@ Step 5 rather than silently dropping that source.
 3. **Tag** — each finding carries a badge: `[review]`, `[compliance]`, `[rules]`,
    `[ux-delight]`, or `[architecture]`
 
-## Step 5: Output the findings (under the preamble)
+## Step 5: Output everything as one consolidated block
 
-The Context PR preamble was already posted in Step 4.4. Step 5 shows **only** the findings
-sections, as **a single consolidated block** posted at once under the preamble (never
-finding-by-finding nor source-by-source). Do not re-render the `## Full review — {target}`
-title nor the Context section.
+This is the **first and only** thing the reviewer sees. Post it **all at once** — title, then
+Context preamble, then findings — in one message. Never stream it finding-by-finding or
+source-by-source, and never post the preamble as its own earlier message ahead of the findings
+(that was the old behavior; it's gone). The preamble comes from the Context Walkthrough scratch
+file (`review-all-context.md`, read in Step 4); the findings come from the merge.
+
+The entire report — Summary, Glossary, findings, skeleton, and section titles — is in English,
+for consistency.
 
 ```
+## Full review — {target}
+
+### 📚 PR context (ramp-up)
+
+**Summary**
+{non-technical summary from the Context Walkthrough, 3-5 sentences of prose, in English}
+
+**Glossary**
+{glossary list from the Context Walkthrough}
+
+---
+
 ### P0 — Blocking
 {numbered findings or "None"}
 
@@ -550,12 +626,29 @@ title nor the Context section.
 {numbered findings or "None"}
 
 ---
-Sources: /review ({N} findings), /lm-local-compliance-review ({N} findings), /lm-reviewer-rules ({N} findings), /lm-ux-delight ({N} suggestions), Architecture & Structure Review (/lm-hardcore-review) ({N} findings), /lm-flow-walkthrough ({N_flows} independent flows)
+Sources: /review ({N} findings), /lm-local-compliance-review ({N} findings), /lm-reviewer-rules ({N} findings), /lm-ux-delight ({N} suggestions), Architecture & Structure Review (/lm-hardcore-review) ({N} findings)
+
+> Show only the subagents in `SELECTED`: drop the Sources entries and token-table rows for any
+> subagent that was not launched, and append `— {count} of 6 subagents` to the Sources line.
+
+💰 **Token usage (subagents only — orchestrator overhead excluded):**
+| Subagent | Tokens | Wall-clock |
+|---|---|---|
+| Code Review (/review) | {subagent_tokens or n/a} | {duration}s |
+| Compliance (/lm-local-compliance-review) | {subagent_tokens or n/a} | {duration}s |
+| UX Delight (/lm-ux-delight) | {subagent_tokens or n/a} | {duration}s |
+| Reviewer Rules (/lm-reviewer-rules) | {subagent_tokens or n/a} | {duration}s |
+| Architecture & Structure (/lm-hardcore-review) | {subagent_tokens or n/a} | {duration}s |
+| Context Walkthrough | {subagent_tokens or n/a} | {duration}s |
+| **Total** | **{sum} tokens** | — |
 
 ---
 **Actions?** Type a number to dig deeper, "fix all P0-P1" to fix the urgent ones,
 "fix N" for a specific fix, or "done" to finish.
 ```
+
+When summing the **Total**, skip any source marked `n/a` and add a `({k}/6 reported)` note next
+to the total so a partial measurement is not mistaken for the full cost.
 
 ### Format of each finding
 
@@ -569,14 +662,16 @@ Sources: /review ({N} findings), /lm-local-compliance-review ({N} findings), /lm
 
 ### "No problem detected" case
 
-If all 5 scratch files say "No issues found" / "No suggestions.", still show the Context PR
-preamble (already posted in Step 4.4 — it has ramp-up value on its own), then:
+If every launched review scratch file says "No issues found" / "No suggestions.", still emit the
+full block — title + Context preamble (if Context Walkthrough was selected; it has ramp-up value
+on its own) — and replace the P0-P3 sections with:
 
 ```
 No problems detected by the automated reviews.
 ```
 
-No compliment. Silence is approval.
+No compliment. Silence is approval. Still append the **Token usage** table (same format as
+Step 5) below this line — the cost summary is reported on every run, findings or not.
 
 ## Step 6: Interactive mode
 

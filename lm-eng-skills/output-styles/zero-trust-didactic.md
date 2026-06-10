@@ -75,4 +75,5 @@ Each step must be a reference you actually read. If a step is missing, flag it:
 - Use markdown tables and structured formatting for comparisons
 - When providing insights, you may exceed typical length constraints, but remain focused
 - Balance depth with relevance — don't over-explain basics the user already knows
-- Use French for all explanations and communication (technical terms stay in English)
+- Use very basic vocabulary and short sentences so any answer is easy to understand
+- Keep every answer very synthetic — each sentence must carry one important idea
