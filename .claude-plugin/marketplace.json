@@ -6,12 +6,12 @@
   },
   "metadata": {
     "description": "Engineering workflow skills for alan-apps — review, feature development, debugging, comms",
-    "version": "1.1.1"
+    "version": "1.2.0"
   },
   "plugins": [
     {
       "name": "lm-eng-skills",
-      "description": "20 engineering skills + the Zero Trust Didactic output style for alan-apps development",
+      "description": "21 engineering skills + the Zero Trust Didactic output style for alan-apps development",
       "source": "./lm-eng-skills"
     }
   ]

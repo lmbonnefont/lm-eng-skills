@@ -15,7 +15,7 @@ In Claude Code, from any project (these install globally — available everywher
 
 > The install reference is `<plugin>@<marketplace>`, both named `lm-eng-skills`. If your Claude Code version derives the marketplace name differently, run `/plugin marketplace list` to see the exact reference, then `/plugin install lm-eng-skills@<that-name>`.
 
-That's it — all 20 skills are now available. Trigger one by typing `/lm-<name>` (e.g. `/lm-review-all`) or just describe your task and Claude picks the right skill.
+That's it — all 21 skills are now available. Trigger one by typing `/lm-<name>` (e.g. `/lm-review-all`) or just describe your task and Claude picks the right skill.
 
 ### The Zero Trust Didactic output style (applied automatically)
 
@@ -40,7 +40,7 @@ The marketplace cache is a managed git clone. Pull the latest skills with:
 
 This purges the plugin from the cache and forgets the marketplace. Nothing is left in `~/.claude/skills/` and no symlinks are created — your `~/.claude` returns to its prior state.
 
-## The 20 skills
+## The 21 skills
 
 | Skill | What it does |
 |-------|--------------|
@@ -63,6 +63,7 @@ This purges the plugin from the cache and forgets the marketplace. Nothing is le
 | `lm-review-all` | Run all reviews in parallel (/review + compliance + UX + reviewer-rules + hardcore) into one P0–P3 report |
 | `lm-reviewer-rules` | Review against rules extracted from Bastien Landre & Mickaël Berguem's PR reviews |
 | `lm-skill-retro` | Five Whys post-mortem on a skill that misfired, then patch it |
+| `lm-teach` | Teach you a new skill or concept across sessions, using the current dir as a stateful learning workspace |
 | `lm-ux-delight` | Recommend UX micro-improvements (fewer clicks, smarter defaults) during feature dev |
 
 ## How it's packaged
@@ -76,7 +77,7 @@ lm-eng-skills/                       # marketplace repo
 └── lm-eng-skills/                   # the plugin
     ├── .claude-plugin/
     │   └── plugin.json
-    ├── skills/                      # 20 SKILL.md directories
+    ├── skills/                      # 21 SKILL.md directories
     └── output-styles/
         └── zero-trust-didactic.md   # auto-applied (force-for-plugin: true)
 ```
