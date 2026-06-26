@@ -1,5 +1,6 @@
 ---
 name: lm-skill-retro
+model: sonnet
 description: Run a Five Whys post-mortem on a skill that made a mistake, then hand off to skill-creator to patch the skill so it doesn't repeat. Use whenever the user reports that a skill produced a wrong result, missed a signal, made a bad recommendation, or otherwise failed — phrases like "le skill X a fait une erreur", "/lm-skill-retro", "/skill-retro", "post-mortem du skill", "pourquoi le skill a raté", "améliore le skill X avec ce retour", "le skill a oublié Y", "skill failure", "skill mistake", "retro on skill", or any honest retrospective the user shares about a recent skill output that was wrong. Also trigger proactively right after the user describes a skill failure even if they don't explicitly ask for a retro — this is the right next step. Do NOT use for: code bugs (use /lm-debug-5whys), feature design issues, or first-time skill creation (use /skill-creator directly).
 ---
 

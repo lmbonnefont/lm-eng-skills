@@ -1,5 +1,6 @@
 ---
 name: lm-flow-walkthrough
+effort: medium
 description: >
   Trace and explain code flows end-to-end with annotated call chains and narrative
   explanations. Every claim is backed by a file:line reference.
@@ -48,6 +49,8 @@ If ambiguous (multiple candidates), use `AskUserQuestion`:
 
 ## Step 1 — Entry point localization
 
+> **codegraph-first**: if the target area is indexed (see Step 2 engine), resolve the entry point with `codegraph_search "<name or path>"` instead of the greps below — it ranks symbols by name with `file:line` and signatures in one call. Use the greps only as fallback.
+
 ### For an endpoint
 
 1. Grep the path in the route decorators:
@@ -82,7 +85,30 @@ If ambiguous (multiple candidates), use `AskUserQuestion`:
 
 Starting from the resolved entry point, trace the flow hop by hop.
 
-### Trace procedure
+### Trace engine: codegraph-first
+
+If a **codegraph** index covers the target area (the `codegraph_*` MCP tools are available — e.g. the `occupational_health` component is indexed), use it as the **primary** trace engine. It returns exact call edges without reading whole files (measured **~5.6× fewer tokens** than Read+Grep on a real OH flow, and no false positives from string matches).
+
+| Trace need | codegraph tool | Replaces |
+|---|---|---|
+| Find a symbol / entry point by name | `codegraph_search` | grep route decorators / key terms |
+| Function source + caller/callee trail (one hop) | `codegraph_node` | Read the whole file |
+| Outgoing calls (descend) | `codegraph_callees` | Read + identify calls + grep each |
+| Incoming calls (ascend) | `codegraph_callers` | grep the symbol across the repo |
+| Blast radius of a node | `codegraph_impact` | read every caller file |
+| Area overview (source + call paths) | `codegraph_explore` | read many files |
+
+**Pass an ABSOLUTE `projectPath`.** When the index lives in a subdirectory (e.g. a per-component or per-app index), the MCP server resolves `.codegraph/` relative to *its own* working directory, not the repo root — so a repo-relative `projectPath` silently reports "not indexed" even when the index exists. Always prefix the path with the repo root.
+
+**Don't trust a single "not indexed" response.** If codegraph returns "not indexed" / "no `.codegraph/` found" / "don't call again this session", that is usually a bad-path symptom, not a missing index. Retry **once** with the absolute `projectPath` before falling back to Grep + Read. Only fall back for the specific area that is *still* un-indexed after the absolute-path retry — never generalize one area's failure to the others.
+
+**The "Explore budget: N calls" line is soft guidance**, scoped to the `explore` tool only. `codegraph_node` and `codegraph_search` do not consume it — keep using them freely, and don't let the budget line push you to grep prematurely.
+
+**Fallback**: if no index covers the target (frontend, or an un-indexed component), use the Grep + Read procedure below. The output format (Sections A/B/C, GAP flagging) is identical either way.
+
+**Zero-trust still applies**: every `file:line` codegraph returns must appear in the output as a clickable reference. codegraph resolves edges precisely, but runtime dispatch (`get_plugin()`, Flask signals, country `app_specifics/`) is still a `[GAP]` — codegraph cannot resolve those either.
+
+### Trace procedure (fallback engine — Grep + Read, when codegraph does not cover the target)
 
 1. **Read** the current function
 2. **Identify** all outgoing calls (function calls, imports)

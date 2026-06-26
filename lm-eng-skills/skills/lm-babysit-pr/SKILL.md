@@ -1,5 +1,6 @@
 ---
 name: lm-babysit-pr
+model: sonnet
 description: Monitor a PR's CI status and auto-fix failures until green. Use whenever the user says "babysit", "watch CI", "monitor PR", "fix CI", "wait for CI", "keep CI green", "babysitt", or any request to continuously monitor a pull request's CI pipeline and fix issues automatically. Also triggers on "/babysit-pr", "/babysit", "check my PR until green", "make CI pass".
 ---
 

@@ -1,0 +1,56 @@
+{
+  "skill_name": "lm-v1-options",
+  "evals": [
+    {
+      "id": 0,
+      "name": "banner-trap",
+      "prompt": "Je dois livrer une V1 de la déclaration des expositions par les RH dans le dashboard occupational health. Je pensais faire une bannière qui liste les nouveaux salariés à traiter. Aide-moi à cadrer la V1.",
+      "expected_output": "Reframes the banner as a mechanism, runs the full gate, probes operational reality, includes a Lever-B scope-collapse option, keeps every contender job-delivering, sorts options by complexity, grounds claims in file:line.",
+      "assertions": [
+        "Explicitly reframes the banner as a mechanism rather than the V1",
+        "Runs the FULL altitude gate before options — states the job AND who-hurts-now AND a done-when signal (not just a job/mechanism reframe)",
+        "Probes operational reality (distribution / existing actor / stock-vs-flow), not just the job",
+        "Includes a Lever-B scope-collapse option that handles far less of the problem by exploiting the default or existing classification (e.g. HR only flags known-risk exceptions, stock left to the doctor)",
+        "Every option presented as a contender delivers the job (non-delivering options are quarantined outside the five)",
+        "Produces exactly 5 contender options, presented sorted by technical complexity (simplest first)",
+        "Each option scored on technical complexity AND iterability",
+        "At least one technical complexity claim cites a concrete file:line"
+      ],
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "pdf-export",
+      "prompt": "On veut permettre aux RH d'exporter la liste des visites à venir en PDF depuis le dashboard occupational health. Quelle V1 je shippe en 3 jours ?",
+      "expected_output": "Runs the full gate, probes who needs the file, includes a Lever-B option questioning whether a full export is needed, keeps contenders job-delivering, explores existing export code, sorts by complexity.",
+      "assertions": [
+        "Runs the FULL altitude gate before options — states the job AND who-hurts-now AND a done-when signal (not just a job/mechanism reframe)",
+        "Probes operational reality (who needs the file, recipient, stock-vs-flow) via questions/assumptions",
+        "Includes a Lever-B scope-collapse option that questions whether a full export is needed at all (e.g. existing on-screen list + browser print, or a single recipient)",
+        "Every option presented as a contender delivers the job",
+        "Explores the existing visits/export code (codegraph or grep) before estimating complexity",
+        "Produces exactly 5 contender options, presented sorted by technical complexity (simplest first)",
+        "Each option has complexity, iterability, and assumed tradeoffs",
+        "At least one technical claim cites a concrete file:line"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "mechanism-reframe",
+      "prompt": "Il me faut un nouvel endpoint pour patcher le risk_category d'un salarié depuis l'admin. C'est quoi la plus petite version ?",
+      "expected_output": "Reframes 'new endpoint' to a job, runs the full gate, probes who actually edits this, includes a Lever-B option questioning whether any endpoint is needed, surfaces the existing write path, sorts by complexity.",
+      "assertions": [
+        "Reframes 'new endpoint' from a mechanism to an underlying job",
+        "Runs the FULL altitude gate before options — states the job AND who-hurts-now AND a done-when signal",
+        "Probes operational reality (who actually edits this, Alan ops vs HR, does Marmot already do it, is the default safe)",
+        "Includes a Lever-B scope-collapse option that questions whether any new endpoint is needed (e.g. ops uses Marmot today; default SI + doctor classification covers the stock)",
+        "Every option presented as a contender delivers the job",
+        "Surfaces the existing risk_category write path (update_administrative_profile) with a file:line",
+        "Produces exactly 5 contender options, presented sorted by technical complexity (simplest first)",
+        "Each option includes iterability/lock-in assessment"
+      ],
+      "files": []
+    }
+  ]
+}

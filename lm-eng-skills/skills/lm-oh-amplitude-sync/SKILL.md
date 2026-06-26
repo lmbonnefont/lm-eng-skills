@@ -1,5 +1,6 @@
 ---
 name: lm-oh-amplitude-sync
+model: sonnet
 description: >
   Synchronizes the Occupational Health (OH) analytics events from the alan-apps codebase
   with the Amplitude dashboard "Prévenir — Dashboard Usage" (ID 8zjhveo3).

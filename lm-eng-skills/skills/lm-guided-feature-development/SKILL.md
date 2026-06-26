@@ -474,6 +474,14 @@ Consult `references/testing-strategy.md` and confirm. Apply only the relevant se
 
 Code the feature + tests following the test plan. Use Figma specs from the plan (section "Figma Specs") as reference for component structure and styling.
 
+**Write-time readability** — Before writing the implementation, invoke `/lm-write-readable` in caller mode so readability rules are loaded up front and a self-critique pass runs on the just-written code (before the 6c reviews catch it):
+
+```
+Call: Skill(skill: "lm-write-readable", args: "--caller")
+```
+
+This is write-time only (it does not review the diff, hunt bugs, or audit conventions — that stays in 6c). It returns a short readability summary, then control returns here. Skip it for trivial one-line changes.
+
 **Helper skills** (use only when relevant to the ticket's layer):
 - Frontend: `jest-unit-test`, `storybook-stories`
 - Backend: no special skill — use pytest directly

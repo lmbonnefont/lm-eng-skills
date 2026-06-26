@@ -1,5 +1,6 @@
 ---
 name: lm-teach
+effort: medium
 description: Teach the user a new skill or concept, within this workspace.
 disable-model-invocation: true
 argument-hint: "What would you like to learn about?"
@@ -54,6 +55,22 @@ The lesson should be short, and completable very quickly. Learners' working memo
 If possible, open the lesson file for the user by running a CLI command.
 
 Each lesson should link via HTML anchors to other lessons and reference documents.
+
+### Code references must be clickable (always)
+
+When a lesson or reference document cites a code location (`file:line`), it MUST be a clickable link that opens that exact line in VS Code — never plain text. Use the editor URL scheme:
+
+```html
+<a class="loc" href="vscode://file/ABSOLUTE/PATH/to/file.py:LINE">file.py:LINE</a>
+```
+
+Rules:
+- Path is **absolute**, starting from `/` (e.g. `vscode://file/Users/.../alan-apps/backend/.../entry.py:33`). Relative paths do not resolve.
+- Display text stays the short, readable `file.py:LINE` (or `dir/file.py:LINE`); the full path lives only in the `href`.
+- Style the anchor so it reads as a reference, not a generic link, e.g. `a.loc { text-decoration: none; border-bottom: 1px dotted; }`.
+- Applies to BOTH lessons and reference docs (glossaries especially — they're revisited most).
+- First click may prompt "Open Visual Studio Code?" — that's expected; the user accepts once.
+- This is zero-trust teaching: every code claim is one click from its proof.
 
 Each lesson should recommend a primary source for the user to read or watch. This should be the most high-quality, high-trust resource you found on the topic.
 

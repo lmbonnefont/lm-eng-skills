@@ -1,5 +1,7 @@
 ---
 name: lm-notify
+model: haiku
+effort: low
 description: Send a macOS desktop notification with sound. Use whenever the user says "/notify", "notify me", "send me a notification", "alert me", or when a long-running task completes and the user previously asked to be notified. Also use proactively at the end of babysitting tasks (CI monitoring, deploy watching) to alert the user.
 ---
 

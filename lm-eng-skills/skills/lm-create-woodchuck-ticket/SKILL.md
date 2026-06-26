@@ -1,5 +1,6 @@
 ---
 name: lm-create-woodchuck-ticket
+model: sonnet
 description: Create or enrich a Woodchuck-ready Linear ticket targeting Alan newcomers with zero codebase knowledge. Supports three modes — **create** (from a product problem description), **enrich** (an existing Linear ticket already labelled Woodchuck), and **convert** (an existing Linear ticket without the label, to be made woodchuck-ready). Woodchuck tickets stay at the product/UX level — no implementation details — and always include the exact interface, audience, success criteria, and click-by-click access steps backed by real code references. Use whenever the user asks to "create a woodchuck ticket", "draft a woodchuck issue", "new woodchuck for [project]", "améliore le woodchuck OHSET-XXX", "enrichis ce ticket woodchuck", "rends ce ticket woodchuck-ready", or pastes a Linear URL alone with a request to make it newcomer-friendly. Triggered by /lm-create-woodchuck-ticket. Different from woodchuck-assess (which audits batches of tickets per team) — this skill works on a single ticket at a time.
 ---
 

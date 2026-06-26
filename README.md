@@ -15,13 +15,21 @@ In Claude Code, from any project (these install globally — available everywher
 
 > The install reference is `<plugin>@<marketplace>`, both named `lm-eng-skills`. If your Claude Code version derives the marketplace name differently, run `/plugin marketplace list` to see the exact reference, then `/plugin install lm-eng-skills@<that-name>`.
 
-That's it — all 21 skills are now available. Trigger one by typing `/lm-<name>` (e.g. `/lm-review-all`) or just describe your task and Claude picks the right skill.
+That's it — all 24 skills are now available. Trigger one by typing `/lm-<name>` (e.g. `/lm-review-all`) or just describe your task and Claude picks the right skill.
 
 ### The Zero Trust Didactic output style (applied automatically)
 
 This plugin also ships an output style that makes Claude back **every** factual claim about the codebase with a clickable `file:line` reference. It is **applied automatically** while the plugin is enabled (`force-for-plugin: true`) — no setup needed.
 
 To opt out without uninstalling, switch styles with `/output-style default` (or pick another), or disable the plugin with `/plugin disable lm-eng-skills@lm-eng-skills`.
+
+### Optional: faster code navigation (codegraph)
+
+Several skills explore the codebase faster when [codegraph](https://github.com/colbymchenry/codegraph) — a local code-intelligence index — is installed. It is **optional**: the skills detect it and fall back to `grep` if it's absent.
+
+```
+curl -fsSL https://raw.githubusercontent.com/colbymchenry/codegraph/main/install.sh | sh
+```
 
 ## Update
 
@@ -40,7 +48,7 @@ The marketplace cache is a managed git clone. Pull the latest skills with:
 
 This purges the plugin from the cache and forgets the marketplace. Nothing is left in `~/.claude/skills/` and no symlinks are created — your `~/.claude` returns to its prior state.
 
-## The 21 skills
+## The 24 skills
 
 | Skill | What it does |
 |-------|--------------|
@@ -54,6 +62,7 @@ This purges the plugin from the cache and forgets the marketplace. Nothing is le
 | `lm-grill-me` | Interview the user relentlessly to stress-test a plan or design |
 | `lm-guided-feature-development` | Guided 6-part feature workflow from Linear ticket to production |
 | `lm-hardcore-review` | Thermonuclear structural-quality review (spaghetti, code judo) |
+| `lm-impact-read` | Measure a shipped OH announcement's W+4 usage impact via Amplitude (instrument + read modes, Notion tracker) |
 | `lm-local-compliance-review` | Review changes for local conventions, ruler rules, production-readiness |
 | `lm-merge-conflict` | Merge/rebase branches and resolve conflicts interactively |
 | `lm-notify` | Send a macOS desktop notification with sound |
@@ -65,6 +74,8 @@ This purges the plugin from the cache and forgets the marketplace. Nothing is le
 | `lm-skill-retro` | Five Whys post-mortem on a skill that misfired, then patch it |
 | `lm-teach` | Teach you a new skill or concept across sessions, using the current dir as a stateful learning workspace |
 | `lm-ux-delight` | Recommend UX micro-improvements (fewer clicks, smarter defaults) during feature dev |
+| `lm-v1-options` | Scope a feature's V1/V0 — separate the JOB from the MECHANISM, explore the codebase via codegraph, propose 5 versions (bold→conservative) with tradeoffs |
+| `lm-write-readable` | Write-time readability — apply clean-code rules while coding + one self-critique pass (not a reviewer) |
 
 ## How it's packaged
 
@@ -77,7 +88,7 @@ lm-eng-skills/                       # marketplace repo
 └── lm-eng-skills/                   # the plugin
     ├── .claude-plugin/
     │   └── plugin.json
-    ├── skills/                      # 21 SKILL.md directories
+    ├── skills/                      # 24 SKILL.md directories
     └── output-styles/
         └── zero-trust-didactic.md   # auto-applied (force-for-plugin: true)
 ```

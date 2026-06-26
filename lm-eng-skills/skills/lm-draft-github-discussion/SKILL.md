@@ -1,5 +1,6 @@
 ---
 name: lm-draft-github-discussion
+model: sonnet
 description: >
   Drafts a GitHub Discussion on alan-eu/Topics in Louis-Marie's voice, after
   framing the content via /lm-grill-me. Applies Alan's Problem-Solving Method

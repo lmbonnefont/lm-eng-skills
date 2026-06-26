@@ -16,6 +16,8 @@ Identify which question is being answered — from the user's prompt, the surrou
 
 The two branches produce very different artifacts — getting this wrong wastes the whole prototype. If the question is genuinely ambiguous and the user isn't reachable, default to whichever branch better matches the surrounding code (a backend module → logic; a page or component → UI) and state the assumption at the top of the prototype.
 
+For the UI branch especially, don't jump straight to building: first align with the user on the big UX blocks, then ground the variants in the host page's existing components and spacing (see [UI.md](UI.md)). Changing a described layout is cheap; changing three coded variants is not.
+
 ## Rules that apply to both
 
 1. **Throwaway from day one, and clearly marked as such.** Locate the prototype code close to where it will actually be used (next to the module or page it's prototyping for) so context is obvious — but name it so a casual reader can see it's a prototype, not production. For throwaway UI routes, obey whatever routing convention the project already uses; don't invent a new top-level structure.
@@ -24,6 +26,7 @@ The two branches produce very different artifacts — getting this wrong wastes 
 4. **Skip the polish.** No tests, no error handling beyond what makes the prototype _runnable_, no abstractions. The point is to learn something fast and then delete it.
 5. **Surface the state.** After every action (logic) or on every variant switch (UI), print or render the full relevant state so the user can see what changed.
 6. **Delete or absorb when done.** When the prototype has answered its question, either delete it or fold the validated decision into the real code — don't leave it rotting in the repo.
+7. **Use codegraph for code lookup, never grep.** Whenever the repo has a `.codegraph/` index, reach for codegraph (`codegraph_explore` / `codegraph_node`, or the `codegraph` CLI) to find and read code — including the grounding inventory of which components and spacing the host page uses. It returns the real symbols and their verbatim source in one call, which is exactly what "reuse the existing elements" needs. Grep/find here tends to surface lookalikes and miss the component the page actually renders. Only fall back to the project's normal search when there is no `.codegraph/` index.
 
 ## When done
 

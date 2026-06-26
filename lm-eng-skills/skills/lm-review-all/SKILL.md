@@ -1,12 +1,13 @@
 ---
 name: lm-review-all
+model: sonnet  # orchestration only (read scratch, dedup, format) — subagents keep their own model via the table below
 description: >
   Full review of a PR: runs /review (bugs, quality, tests), /lm-local-compliance-review
   (conventions, ruler rules), /lm-ux-delight (UX micro-improvements), /lm-reviewer-rules
   (rules extracted from Bastien Landre & Mickaël Berguem's reviews), /lm-hardcore-review
   as the Architecture & Structure Review (abstractions, modularity, code judo, spaghetti)
-  in parallel, plus a 6th Context Walkthrough agent that produces a non-technical summary +
-  glossary, shown as a preamble before the findings.
+  in parallel, plus a 6th Context Walkthrough agent that produces a non-technical summary,
+  glossary, and a layer-grouped file-by-file walkthrough, shown as a preamble before the findings.
   Aggregates findings into a P0-P3 report with source badges. Use when: /lm-review-all,
   "revue complète", "full review", "review everything", "all reviews on PR #123",
   "lance toutes les revues", or any request to run several reviews on the same changes.
@@ -18,21 +19,26 @@ description: >
 
 This skill **orchestrates** — it never reviews by itself. It delegates to a subset of 6
 subagents you pick, aggregates their findings, deduplicates, and emits **one** consolidated
-block: a Context preamble (summary + glossary) followed by P0-P3 findings with source badges.
+block: a Context preamble (summary + glossary + file-by-file walkthrough) followed by P0-P3
+findings with source badges.
 
 The subagents (any subset, picked in Step 2):
 
 | # | Subagent | Skill it runs | Lane | `model` |
 |---|---|---|---|---|
 | 1 | Code Review | `/review` | bugs, quality, tests | `opus` |
-| 2 | Compliance | `/lm-local-compliance-review` | conventions, ruler rules | `opus` |
+| 2 | Compliance | `/lm-local-compliance-review` | conventions, ruler rules | `sonnet` |
 | 3 | UX Delight | `/lm-ux-delight` | UX micro-improvements (frontend) | `sonnet` |
-| 4 | Reviewer Rules | `/lm-reviewer-rules` | Bastien & Mickaël's patterns | `opus` |
-| 5 | Architecture & Structure | `/lm-hardcore-review` | abstractions, modularity, spaghetti | `opus` |
-| 6 | Context Walkthrough | (no skill) | non-technical summary + glossary | `sonnet` |
+| 4 | Reviewer Rules | `/lm-reviewer-rules` | Bastien & Mickaël's patterns | `sonnet` |
+| 5 | Architecture & Structure | `/lm-hardcore-review` | abstractions, modularity, spaghetti | `sonnet` |
+| 6 | Context Walkthrough | (no skill) | summary + glossary + file-by-file walkthrough | `sonnet` |
 
-Model tiering is fixed: the two cheap-cognition subagents (UX Delight, Context Walkthrough) run
-on `sonnet`; the four bug/structure reviewers stay on `opus`. Subagent 5 is **behavior-preserving**
+Model tiering (benchmarked opus-vs-sonnet on PR #97925, 2026-06-22): only **Code Review** (the
+bug lane) runs on `opus`. The other five run on `sonnet` — the benchmark showed sonnet matched
+opus on compliance/rules/architecture/UX at ~⅓–¾ the tokens with no false positives, but on the
+bug lane it emitted a confidently-wrong false-positive P1 (inverted a Python import/mock rule), so
+`/review` stays on `opus`. The orchestrator itself also runs on `sonnet` (frontmatter `model:`) —
+it only reads scratch files, dedups, and formats. Subagent 5 is **behavior-preserving**
 maintainability review (structure, simplification, codebase health) — not runtime bugs or test
 coverage; those are Subagent 1's lane.
 
@@ -111,7 +117,7 @@ Which subagents do you want to launch? Reply with numbers (e.g. `1 3 6`), `all`,
 3. UX Delight — /lm-ux-delight (UX micro-improvements, frontend PRs)
 4. Reviewer Rules — /lm-reviewer-rules (Bastien & Mickaël's review patterns)
 5. Architecture & Structure — /lm-hardcore-review (abstractions, modularity, spaghetti)
-6. Context Walkthrough — summary + glossary preamble (cheap, on sonnet)
+6. Context Walkthrough — summary + glossary + file-by-file walkthrough preamble (cheap, on sonnet)
 ```
 
 The menu numbers are the **same** as the top table and the Subagent N sections below — one
@@ -207,12 +213,12 @@ suggestions." if none.`
 Same wrapper, but **replace the template's middle "Write {REPORT}…" line** with the body below
 (this agent runs no skill, has no "findings", and produces no P0-P3 output — so the
 finding-centric write line doesn't apply). Keep only the scope clause, the ack-only rule, and the
-silence rule. End the body with: `Write the 2 outputs (Summary → Glossary) to
+silence rule. End the body with: `Write the 3 outputs (Summary → Glossary → Walkthrough) to
 tmp/agent-scratch/review-all-context.md with the Write tool.` Body:
 
 ```
 You are building ramp-up context for a PR reviewer. Do NOT review code quality — help the
-reviewer understand WHAT the PR touches. Produce 2 outputs, concatenated in order, IN ENGLISH:
+reviewer understand WHAT the PR touches. Produce 3 outputs, concatenated in order, IN ENGLISH:
 
 OUTPUT 0 — Non-technical summary (3-5 sentences of prose, no technical jargon):
 - Collect: `gh pr view {N} --json title,body` (if PR), else branch name + `git log -10 --oneline`
@@ -226,6 +232,34 @@ OUTPUT 1 — Glossary (3-5 business/domain terms from PR title, branch, file pat
 names; skip generic terms like User/Config/Service). For each, ONE sentence defined from code
 context (grep READMEs, docstrings, type defs). Format: **{TERM}** — {definition}. Ref: `file:line`.
 If you can't find a definition, mark [unverified] — don't invent.
+
+OUTPUT 2 — File-by-file walkthrough (the ramp-up centerpiece: it lets the reviewer read the diff
+in the order the data flows, not alphabetically — so each file builds on the previous one).
+- Group the DIFF_FILES by **architectural layer** and present the layers in **dependency order**
+  (the order to open them so the change explains itself), not the order `git` lists them.
+  - Backend (Alan layered monolith) canonical order: types → enums → business logic (write, then
+    read) → dependency / DB → public surface (re-exports, public queries) → controller / blueprint
+    → wiring (bootstrap, conftest, blueprint registration) → tests.
+  - Frontend: types/schemas → API hooks → state/store → components → screens → routes → tests.
+  - If the PR fits neither, infer the layers from the paths; the goal is "open in this order and it
+    builds on itself". Put anything you can't place under a final "Other" group.
+- For each file: ONE short narrative line — what changed and its **role in the flow** ("writes the
+  subscription row", "re-exports the action across the component boundary") — NOT a line-by-line
+  restatement of the diff. Link the file and its key new symbol(s) as `file:line` (grep the file
+  for the symbol's line); prefer linking the symbol over the bare file. Flag the file with a ⚠️ +
+  the finding number if a review lane flagged it — but you don't have the findings, so instead just
+  note non-obvious risk you can see from the code itself in ≤8 words (e.g. "dead code — no caller").
+- Collapse purely mechanical files — blueprint registration, re-exports, test-registration, a lone
+  blank-line change — into a single grouped bullet or a 3-column table, not one entry each. A wiring
+  line doesn't deserve a paragraph; the reviewer needs the shape, not the boilerplate.
+- End with one or two **mental-map flow diagrams**: a tiny ASCII call chain for the PR's main
+  path(s), each hop a `file:line`, so the reviewer sees how the layers connect. Example:
+    POST /siret_contract  [siret_contract.py:96]
+      └─ create_siret_level_contract  [actions.py:66]
+           ├─ _initialize_…  (writes the subscription row)  [actions.py:169]
+           └─ get_company_id_from_siret → publishes 2 events  [dependencies:245]
+- Stay strictly within DIFF_FILES. For a large diff (>25 files), keep one line per file but lean
+  hard on the grouped-table collapse so the section stays scannable, not a wall.
 ```
 
 ## Step 4.5: Wait silently for all launched notifications
@@ -283,6 +317,9 @@ not in `SELECTED` and append `— {count} of 6 subagents` to the Sources line.
 
 **Glossary**
 {glossary list from the Context Walkthrough}
+
+**File-by-file walkthrough**
+{the layer-grouped walkthrough + mental-map flow diagram(s) from the Context Walkthrough, verbatim}
 
 ---
 

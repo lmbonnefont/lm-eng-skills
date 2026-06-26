@@ -43,17 +43,39 @@ Write down the plan in one line, in the prototype's location or a top-of-file co
 
 This works whether the user is here to push back or not.
 
-### 2. Generate radically different variants
+### 2. Align on the big UX blocks with the user first
+
+Before writing any variant, lay out the **big UX decisions** in plain language and get the user's read on them. This is the cheapest moment to disagree: a sentence is free to change, three coded variants are not. The failure this prevents is building a polished prototype on a layout or mental model the user would have rejected in one sentence.
+
+Put the skeleton on the table, one or two lines each, no code:
+
+- Where it mounts (which existing page/section, sub-shape A vs B).
+- The major layout blocks and their order (which sections exist, what's primary vs secondary).
+- The primary affordance each variant leans on (the main thing the user does).
+- What each variant is *trying to prove* differently from the others.
+
+If the user is reachable, treat this as a **gate**: share the skeleton, discuss it, adjust, and only then build. It isn't a formal sign-off, it's a chance to catch a wrong assumption early. If the user is AFK, write the skeleton at the top of the prototype (or in `NOTES.md`) and proceed, flagging it as "assumed, confirm on review".
+
+### 3. Ground in the host page (reuse, don't reinvent)
+
+A prototype that ships its own buttons, inputs, tags, and spacing reads as foreign and breaks the page's visual rhythm — even when each variant looks fine alone. The job here is to make the variants look like they already belong. So before drafting, inventory what the host page and its sibling sections already use, and reuse it:
+
+- **Components**: the real design-system primitives the surrounding screen renders (buttons, inputs, tags, tables, modals, etc.). Reuse those exact components with their existing props and sizes, not hand-rolled equivalents.
+- **Spacing**: the spacing tokens and the rhythm of neighbouring sections (gaps between blocks, heading-to-content spacing). Match them so a variant slots in without shoving the rest of the page around.
+
+Do this inventory with **codegraph** (see the codegraph rule in `SKILL.md`): explore the host page and a couple of sibling sections to see which components and spacing values they actually use, and copy those. Don't grep or eyeball-guess the design system — the goal is the *same* elements, not lookalikes. Diverge from an existing pattern only when a variant is deliberately testing a different one, and say so.
+
+### 4. Generate radically different variants
 
 Draft each variant. Hold each one to:
 
 - The page's purpose and the data it has access to.
-- The project's component library / styling system (TailwindCSS, shadcn, MUI, plain CSS, whatever).
+- The host page's existing components and spacing (from step 3): build each variant from those same primitives and spacing tokens. A variant is free to throw out the *layout structure*, but not to invent a parallel design system.
 - A clear exported component name, e.g. `VariantA`, `VariantB`, `VariantC`.
 
 Variants must be **structurally different** — different layout, different information hierarchy, different primary affordance, not just different colours. Three slightly-tweaked card grids isn't a UI prototype, it's wallpaper. If two drafts come out too similar, redo one with explicit "do not use a card grid" guidance.
 
-### 3. Wire them together
+### 5. Wire them together
 
 Create a single switcher component on the route:
 
@@ -74,7 +96,7 @@ For sub-shape A (existing page): keep all the existing data fetching above the s
 
 For sub-shape B (new page): the throwaway route under `/prototype/<name>` mounts the same switcher.
 
-### 4. Build the floating switcher
+### 6. Build the floating switcher
 
 A small fixed-position bar at the bottom-centre of the screen with three pieces:
 
@@ -91,11 +113,11 @@ Behaviour:
 
 Put the switcher in a single shared component so both sub-shapes can reuse it. Locate it wherever shared UI lives in the project.
 
-### 5. Hand it over
+### 7. Hand it over
 
 Surface the URL (and the `?variant=` keys). The user will flip through whenever they get to it. The interesting feedback is usually **"I want the header from B with the sidebar from C"** — that's the actual design they want.
 
-### 6. Capture the answer and clean up
+### 8. Capture the answer and clean up
 
 Once a variant has won, write down which one and why (commit message, ADR, issue, or a `NOTES.md` next to the prototype if running AFK and the user hasn't responded yet). Then:
 
